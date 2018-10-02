@@ -1,4 +1,4 @@
-name := "DecsHighlighter"
+name := "DeCSHighlighter"
 
 version := "0.1"
 

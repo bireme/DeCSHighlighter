@@ -1,6 +1,6 @@
 /*=========================================================================
 
-    DecsHighlighter © Pan American Health Organization, 2018.
+    DeCSHighlighter © Pan American Health Organization, 2018.
     See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt
 
   ==========================================================================*/
