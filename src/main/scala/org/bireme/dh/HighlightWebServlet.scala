@@ -80,7 +80,7 @@ class HighlightWebServlet extends HttpServlet {
       html.replace("{{text}}", marked).replace("{{descriptors}}", set.mkString("\n"))
     }
     //println(s"\n\n\nresult=$result")
-    response.setContentType("text/html")
+    response.setContentType("text/html;charset=UTF-8")
 
     val writer: PrintWriter = response.getWriter
     writer.write(result)
@@ -104,9 +104,13 @@ class HighlightWebServlet extends HttpServlet {
       |    font-family: Arial, Helvetica, sans-serif;
       |}
       |
+      |h3 {
+      |   color: white;
+      |}
+      |
       |/* Style the header */
       |header {
-      |    background-color: #666;
+      |    background-color: #639c63;
       |    padding: 1px;
       |    text-align: center;
       |    font-size: 30px;
@@ -119,7 +123,7 @@ class HighlightWebServlet extends HttpServlet {
       |    float: left;
       |    width: 70%;
       |    height: 700px; /* only for demonstration, should be removed */
-      |    background: #ccc;
+      |    background: #c6dac9;
       |    padding: 20px;
       |}
       |
@@ -128,7 +132,7 @@ class HighlightWebServlet extends HttpServlet {
       |    float: left;
       |    width: 30%;
       |    height: 700px;  /* only for demonstration, should be removed */
-      |    background-color: #ccc;
+      |    background-color: #c6dac9;
       |    padding: 20px;
       |    overflow-x: hidden;
       |    overflow-y: auto;
@@ -143,7 +147,7 @@ class HighlightWebServlet extends HttpServlet {
       |
       |/* Style the footer */
       |footer {
-      |    background-color: #777;
+      |    background-color: #639c63;
       |    padding: 10px;
       |    text-align: right;
       |    color: white;
@@ -163,7 +167,7 @@ class HighlightWebServlet extends HttpServlet {
       |    var content = document.getElementById('div_text').value;
       |    var form = document.createElement("form");
       |    form.setAttribute("method", "post");
-      |    form.setAttribute("action", "/app");
+      |    form.setAttribute("action", "#");
       |    var hiddenField = document.createElement("input");
       |    hiddenField.setAttribute("type", "hidden");
       |    hiddenField.setAttribute("name", "document");

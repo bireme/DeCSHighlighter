@@ -5,19 +5,19 @@
     <context-param>
         <description>DeCS database directory</description>
         <param-name>DECS_PATH</param-name>
-        <param-value>/home/javaapps/sbt-projects/DecsHighlighter/decs/decs</param-value>
+        <param-value>/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs</param-value>
     </context-param>
 
     <context-param>
         <description>Term prefix</description>
         <param-name>PREFIX</param-name>
-        <param-value>**</param-value>
+        <param-value>ᗤ</param-value>
     </context-param>
 
     <context-param>
         <description>Term prefix</description>
         <param-name>SUFFIX</param-name>
-        <param-value>**</param-value>
+        <param-value>ᗧ</param-value>
     </context-param>
 
     <servlet>
