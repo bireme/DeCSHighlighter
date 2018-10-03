@@ -68,8 +68,10 @@ class HighlightWebServlet extends HttpServlet {
     */
   private def processRequest(request: HttpServletRequest,
                              response: HttpServletResponse): Unit = {
-    val doc: String = request.getParameter("document")
+    request.setCharacterEncoding("UTF-8")
 
+    val doc: String = request.getParameter("document")
+//println(s"DOC=$doc")
     val result: String = if ((doc == null) || doc.isEmpty ) {
       html.replace("{{text}}", "").replace("{{descriptors}}", "")
     } else {

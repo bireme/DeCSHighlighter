@@ -12,7 +12,7 @@ import org.scalatest.FlatSpec
 
 class HighlighterTest extends FlatSpec {
   val highlighter = new Highlighter()
-  val descriptors: Predef.Set[String] = Tools.decs2Set("/home/javaapps/sbt-projects/DecsHighlighter/decs/decs")
+  val descriptors: Predef.Map[String,String] = Tools.decs2Set("/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs")
   val map: Map[Char, CharSeq] = highlighter.createTermTree(descriptors)
 
    "The highlighter" should "find 'temefos' as descriptor" in {
