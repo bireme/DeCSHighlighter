@@ -103,7 +103,7 @@ object Tools {
   def uniformString(in: String): String = {
     require(in != null)
 
-    val s1 = Normalizer.normalize(in.trim.toLowerCase(), Form.NFD)
+    val s1 = Normalizer.normalize(in.toLowerCase(), Form.NFD)
 
     s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
   }
