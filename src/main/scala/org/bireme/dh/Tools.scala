@@ -95,7 +95,7 @@ object Tools {
   }
 
   /**
-    * Converts all input charactes into lower case without graphical accents
+    * Converts all input characters into lower case without graphical accents
     *
     * @param in input string to be converted
     * @return the converted string

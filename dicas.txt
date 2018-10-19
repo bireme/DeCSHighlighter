@@ -1,0 +1,5 @@
+to package the web application: clean compile package
+to start/stop the jetty server:  jetty:start
+                                 jetty:stop
+
+
