@@ -27,7 +27,7 @@ class HighlightWebServlet extends HttpServlet {
 
   /**
     * Do initial web app configuration
-    * @param config serlvet config
+    * @param config servlet config
     */
   override def init(config: ServletConfig): Unit = {
     super.init(config)

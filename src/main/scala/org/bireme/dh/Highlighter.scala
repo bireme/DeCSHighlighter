@@ -70,16 +70,16 @@ class Highlighter {
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
     * @param terms the graph of DeCS descriptors/synonyms
-    * @return (the input text highlighted, Seq(initial position, final position, DeCS id), Seq(descriptor/synonym))
+    * @return (the input text highlighted, Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
     */
   def highlight(prefix: String,
                 suffix: String,
                 text: String,
-                terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String)], Seq[String]) = {
+                terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
     val text2 = Tools.uniformString(text)
-    val (seq: Seq[(Int, Int, String)], set: Set[String]) = highlight(0, text2, terms)
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms)
     val (marked: String, tend: Int) = seq.foldLeft("", 0) {
-      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String)) =>
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
         val s = str + text.substring(lpos, termBegin) + prefix + text.substring(termBegin, termEnd + 1) + suffix
         (s, termEnd + 1)
     }
@@ -93,11 +93,11 @@ class Highlighter {
     * @param curPos current position inside input text
     * @param text input text
     * @param terms the graph of DeCS descriptors/synonyms
-    * @return (Seq(initial position, final position, DeCS id), Seq(descriptor/synonym))
+    * @return (Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
     */
   private def highlight(curPos: Int,
                         text: String,
-                        terms: Map[Char, CharSeq]): (Seq[(Int,Int, String)], Set[String]) = {
+                        terms: Map[Char, CharSeq]): (Seq[(Int,Int, String, String)], Set[String]) = {
     val size = text.length
 
     if (curPos == size) (Seq(),Set())
@@ -107,7 +107,7 @@ class Highlighter {
         case Some((endPos, id)) =>
           val term = text.substring(curPos, endPos + 1)
           val (seq, set) = highlight(endPos + 1, text, terms)
-          ((curPos, endPos, id) +: seq, set + term)
+          ((curPos, endPos, id, term) +: seq, set + term)
         case None =>
           findValidTermStart(curPos + 1, text, size) match {
             case Some(pos) => highlight(pos, text, terms)
