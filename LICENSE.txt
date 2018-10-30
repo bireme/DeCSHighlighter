@@ -27,7 +27,7 @@ Software. Software may not be used to promote licensees activities, products or 
 any printed materials or electronic documentation accompanying the use of the software,
 as follows:
 
- DeCSHighlighter © Pan American Health Organization, 2017.
+ DeCSHighlighter © Pan American Health Organization, 2018.
 
 5. Copies. You may convey unmodified copies of the Software’s source code as you
 receive it, in any medium, provided that you distribute it under the terms of this License
@@ -62,7 +62,7 @@ a license that permits end users to modify these portions and redistribute its m
 software is governed solely by the terms and conditions of the applicable Open Source
 License. A list of the Open Source Softwares and the applicable Open Source licenses
 including relevant code can be obtained at
-https://github.com/bireme/DeCSHighlighter/blob/master/COPYRIGHT.txt
+https://github.com/bireme/DeCSHighlighter/blob/master/COPYRIGHT.md
 
 10. Disclaimer. PAHO disclaims any and all implied warranties or conditions, including
 any implied warranty of title, non-infringement, merchantability or fitness for a particular
