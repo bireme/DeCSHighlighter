@@ -22,8 +22,6 @@ class HighlightWebServlet extends HttpServlet {
 
   var highlighter: Highlighter = _
   var tree: Map[Char, CharSeq] = _
-  var prefix: String = _
-  var suffix: String = _
 
   /**
     * Do initial web app configuration
@@ -40,10 +38,10 @@ class HighlightWebServlet extends HttpServlet {
 
     highlighter = new Highlighter()
     tree = highlighter.createTermTree(terms)
-    prefix = config.getServletContext.getInitParameter("PREFIX")
-    suffix = config.getServletContext.getInitParameter("SUFFIX")
     println("HighlightWebServlet is listening ...")
   }
+
+  private def presu(term: String): String = s"<span class='decs' onmouseover='showDescription($term)'>$term</span>"
 
   /**
   * Process get http requisition
@@ -71,17 +69,13 @@ class HighlightWebServlet extends HttpServlet {
     request.setCharacterEncoding("UTF-8")
 
     val doc: String = request.getParameter("document")
-//println(s"DOC=$doc")
     val result: String = if ((doc == null) || doc.isEmpty ) {
       html.replace("{{text}}", "").replace("{{descriptors}}", "")
     } else {
-      val (marked: String, _, set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree)
-      //println(s"original=${doc.get}")
-      //println(s"positions=$pos")
-      //println(s"marked=$marked")
+      val (marked: String, _, set: Seq[String]) = highlighter.highlight(presu, doc, tree, true)
       html.replace("{{text}}", marked).replace("{{descriptors}}", set.mkString("\n"))
     }
-    //println(s"\n\n\nresult=$result")
+    response.setCharacterEncoding("UTF-8")
     response.setContentType("text/html;charset=UTF-8")
 
     val writer: PrintWriter = response.getWriter
@@ -155,28 +149,44 @@ class HighlightWebServlet extends HttpServlet {
       |    color: white;
       |}
       |
+      |.decs {
+      |    color: blue;
+      |}
+      |
       |</style>
       |
       |<script>
-      |    function clearDivs()
-      |    {
-      |    document.getElementById('div_text').innerHTML = "";
-      |    document.getElementById('div_descriptors').innerHTML = "";
+      |    function clearDivs() {
+      |      document.getElementById('div_text').innerHTML = "";
+      |      document.getElementById('div_descriptors').innerHTML = "";
       |    }
       |
-      |    function sendText()
-      |    {
-      |    var content = document.getElementById('div_text').value;
-      |    var form = document.createElement("form");
-      |    form.setAttribute("method", "post");
-      |    form.setAttribute("action", "#");
-      |    var hiddenField = document.createElement("input");
-      |    hiddenField.setAttribute("type", "hidden");
-      |    hiddenField.setAttribute("name", "document");
-      |    hiddenField.setAttribute("value", content);
-      |    form.appendChild(hiddenField);
-      |    document.body.appendChild(form);
-      |    form.submit();
+      |    function removePrefixSuffix(text) {
+      |      var content1 = text.replace(/<span class=\"decs\">/g, "");
+      |      var content2 = content1.replace(/<\/span>/g, "");
+      |
+      |      return content2;
+      |    }
+      |
+      |    function stripX(html) {
+      |      var doc = new DOMParser().parseFromString(html, 'text/html');
+      |      var ret = doc.body.textContent || "";
+      |      return ret;
+      |    }
+      |
+      |    function sendText() {
+      |      var content = document.getElementById('div_text').innerHTML;
+      |      var strip = content; //strip(content);
+      |      var form = document.createElement("form");
+      |      form.setAttribute("method", "post");
+      |      form.setAttribute("action", "#");
+      |      var hiddenField = document.createElement("input");
+      |      hiddenField.setAttribute("type", "hidden");
+      |      hiddenField.setAttribute("name", "document");
+      |      hiddenField.setAttribute("value", strip);
+      |      form.appendChild(hiddenField);
+      |      document.body.appendChild(form);
+      |      form.submit();
       |    }
       |
       |</script>
@@ -191,14 +201,14 @@ class HighlightWebServlet extends HttpServlet {
       |<section>
       |    <nav>
       |<h3>Your text</h3>
-      |        <!--div id="div_text" name="docum" style="background-color:#f1f1f1;height: 90%;" contenteditable="true">{{text}}</div-->
-      |        <textarea id="div_text" name="docum" style="background-color:#f1f1f1;height: 90%;width: 100%;contenteditable= 'true'; resize: none;">{{text}}</textarea>
+      |        <div id="div_text" name="docum" style="background-color:#f1f1f1; height:90%; overflow-y:auto;" contenteditable="true">{{text}}</div>
+      |        <!--textarea id="div_text" name="docum" style="background-color:#f1f1f1;height: 90%;width: 100%;contenteditable= 'true'; resize: none;">{{text}}</textarea-->
       |    </nav>
       |
       |    <article>
       |        <h3> Descriptors/synonyms found</h3>
       |        <!--div id="div_descriptors" style="background-color:#f1f1f1;height: 90%;contenteditable=false; overflow-y: auto;">{{descriptors}}</div-->
-      |        <textarea readonly="readonly" id="div_descriptors" style="background-color:#f1f1f1;height: 90%;width:100%; overflow-y: auto; resize:none;">{{descriptors}}</textarea>
+      |        <textarea readonly="readonly" id="div_descriptors" style="background-color:#f1f1f1;height: 90%;width:100%; overflow-y: auto; resize:none;font-size: 15px;">{{descriptors}}</textarea>
       |    </article>
       |</section>
       |<footer>

@@ -1,0 +1,76 @@
+<!-- =========================================================================
+
+DeCSHighlighter © Pan American Health Organization, 2018.
+See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt
+
+========================================================================== -->
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>DeCS Highlighter</title>
+    </head>
+    <body bgcolor="#c6dac9">
+        <h1>DeCS &lt;em&gt;Highlighter&lt;/em&gt;:</h1>
+
+        <h2>Description:</h2>
+
+        <p>A web service to highlight (insert xml tags) all DeCS descriptors and synonynms that occur in an input text.</p>
+
+        <h2>Example:</h2>
+        <p>Given an input text:</p>
+        <p>"Pharmacotherapy has a pivotal role in the management of endometriosis with long-term treatments balancing clinical efficacy (control of pain symptoms and prevention of recurrence of the disease after surgery) with an acceptable safety profile. Treatment choice is based on several factors including age and patient preference, reproductive plans, intensity of pain, severity of disease and incidence of adverse effects.Areas covered: The aim of this review is to provide the reader with a complete overview of drugs that are currently available or are under investigation for the treatment of endometriosis highlighting on-going clinical trials."</p>
+        <p>The output text could be like that:</p>
+        <p>"<font color='blue'>Pharmacotherapy</font> has a pivotal <font color='blue'>role</font> in the <font color='blue'>management</font> of <font color='blue'>endometriosis</font> with long-term <font color='blue'>treatments</font> balancing <font color='blue'>clinical efficacy</font> (<font color='blue'>control</font> of <font color='blue'>pain</font> <font color='blue'>symptoms</font> and <font color='blue'>prevention</font> of <font color='blue'>recurrence</font> of the <font color='blue'>disease</font> after <font color='blue'>surgery</font>) with an acceptable <font color='blue'>safety</font> profile. <font color='blue'>Treatment</font> choice is based on several factors including age and <font color='blue'>patient preference</font>, reproductive <font color='blue'>plans</font>, intensity of <font color='blue'>pain</font>, severity of <font color='blue'>disease</font> and <font color='blue'>incidence</font> of adverse effects.Areas covered: The aim of this <font color='blue'>review</font> is to provide the reader with a complete overview of <font color='blue'>drugs</font> that are currently available or are under investigation for the <font color='blue'>treatment</font> of <font color='blue'>endometriosis</font> highlighting on-going clinical trials."</p>
+
+        <h2>The web service:</h2>
+
+        <p>Path: <i>http://&lt;host&gt;:&lt;port&gt;/serv</i></p>
+        <p>Methods: <i>GET or POST</i></p>
+        <p>Consume: <i>application/x-www-form-urlencoded</i></p>
+        <p>Produce: <i>application/json</i></p>
+        <p>Parameter:</p>
+        <p>&nbsp;&nbsp;<b>document=</b> the input text to be highlighted</p>
+        <p>Optional parameters:</p>
+        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptor/synonym. Default value is '&lt;em&gt;'</p>
+        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptor/synonym. Default value is '&lt;/em&gt;'</p>
+        <p>&nbsp;&nbsp;<b>showText=</b> outputs the highligted text</p>
+        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptor/synonym and the respective DeCS identifier</p>
+        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptor/synonym(s)</p>
+        <p>If showText, showPositions and showDescriptors parameters are all absent, then the text, positions and descriptors are displayed.</p>
+        <br/>
+        <p>Example input:
+        <p>&nbsp;&nbsp;<i>http://&lt;host&gt;:&lt;port&gt;/serv?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
+        <p><i>Example output:</i></p>
+        <p><pre>
+          {
+            "text" : "the &lt;font color='blue'&gt;malaria&lt;/font&gt; desease kills",
+            "positions" : [
+              {
+                "begin" : 4,
+                "end" : 10,
+                "id" : "008462",
+                "descriptor" : "malaria"
+              }
+            ],
+            "descriptors" : [
+              "malaria"
+            ]
+          }</pre></p>
+        <p>Where:</p>
+        <p>&nbsp;&nbsp;<b>text</b> - outputs the highlighted input text</p>
+        <p>&nbsp;&nbsp;<b>positions</b> - indicates the begin and the end positions for each descriptor/synonym in the input text and its DeCs indentifier</p>
+        <p>&nbsp;&nbsp;<b>descriptors</b> - shows each descriptor/synonym found.</p>
+
+        <h2>Example application:</h2>
+        <p>Description: A <a href="app">web application</a> that displays the highlighted input document.</p>
+        <p>Path: <i>http://&lt;host&gt;:&lt;port&gt;/app</i></p>
+        <br/>
+        <p><pre>
+DeCSHighlighter © Pan American Health Organization, 2018.
+See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt
+        </pre></p>
+    </body>
+</html>

@@ -5,19 +5,20 @@
     <context-param>
         <description>DeCS database directory</description>
         <param-name>DECS_PATH</param-name>
-        <param-value>/usr/local/bireme/tabs/decs</param-value>
+        <!--param-value>/usr/local/bireme/tabs/decs</param-value-->
+        <param-value>decs/decs</param-value>
     </context-param>
 
     <context-param>
         <description>Term prefix</description>
         <param-name>PREFIX</param-name>
-        <param-value>ᗤ</param-value>
+        <param-value>&lt;span class="decs"&gt;</param-value>
     </context-param>
 
     <context-param>
         <description>Term prefix</description>
         <param-name>SUFFIX</param-name>
-        <param-value>ᗧ</param-value>
+        <param-value>&lt;/span&gt;</param-value>
     </context-param>
 
     <servlet>

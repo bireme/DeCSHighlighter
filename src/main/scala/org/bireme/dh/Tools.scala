@@ -105,6 +105,16 @@ object Tools {
 
     val s1 = Normalizer.normalize(in.toLowerCase(), Form.NFD)
 
-    s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+    //s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+    s1.replaceAll("([a-z])[\\p{InCombiningDiacriticalMarks}]", "$1")
+  }
+
+  /**
+    * Check if the character is a small letter ('a' <= ch <= 'z') or a digit ('0' <= ch <= '9')
+    * @param ch input character
+    * @return true if it is a small letter or digit and false otherwise
+    */
+  def isLetterOrDigit(ch: Char): Boolean = {
+    ((ch >= 'a') && (ch <= 'z')) || ((ch >= '0') && (ch <= '9'))
   }
 }

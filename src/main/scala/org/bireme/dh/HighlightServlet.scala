@@ -83,7 +83,7 @@ class HighlightServlet extends HttpServlet {
       val showDescriptors: Boolean = (sDescriptors != null) && (sDescriptors.isEmpty || sDescriptors.toBoolean)
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree)
+      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree, true)
       val result: mutable.Buffer[(String, Json)] = mutable.Buffer[(String, Json)]()
 
       // Show all output (text, positions and descriptors) if the showText, showPositions and showDescriptors parameters

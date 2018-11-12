@@ -9,7 +9,9 @@ package org.bireme.dh
 
 import java.io.{BufferedWriter, FileOutputStream, OutputStreamWriter}
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
+import scala.util.matching.Regex
+import scala.util.matching.Regex.Match
 
 /**
   * Class to highlight all DeCS descriptors and synonyms of an input text
@@ -70,17 +72,49 @@ class Highlighter {
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
     * @param terms the graph of DeCS descriptors/synonyms
+    * @param skipXmlElem don't highlight texto inside xml tags neither between them
     * @return (the input text highlighted, Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
     */
   def highlight(prefix: String,
                 suffix: String,
                 text: String,
-                terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
+                terms: Map[Char, CharSeq],
+                skipXmlElem: Boolean): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
     val text2 = Tools.uniformString(text)
-    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms)
+    val seqElem: Seq[(Int, Int)] =
+      if (skipXmlElem)mergeTagPositions(findOpenCloseTags(text), findAutoCloseTag(text), Seq[(Int, Int)]())
+      else Seq[(Int, Int)]()
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
     val (marked: String, tend: Int) = seq.foldLeft("", 0) {
       case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
         val s = str + text.substring(lpos, termBegin) + prefix + text.substring(termBegin, termEnd + 1) + suffix
+        (s, termEnd + 1)
+    }
+    val marked2 = if (tend >= text.length) marked else marked + text.substring(tend)
+
+    (marked2, seq, set.toSeq.sorted)
+  }
+
+  /**
+    * Highlights all DeCS descriptors/synonyms of an input text
+    * @param presu a prefix/suffix function that marks (put tags) the descriptor/synonym
+    * @param text the input text to be highlighted
+    * @param terms the graph of DeCS descriptors/synonyms
+    * @param skipXmlElem do not highlight text inside xml tags neither between them
+    * @return (the input text highlighted, Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
+    */
+  def highlight(presu: String => String,
+                text: String,
+                terms: Map[Char, CharSeq],
+                skipXmlElem: Boolean): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
+    val text2 = Tools.uniformString(text)
+    val seqElem: Seq[(Int, Int)] =
+      if (skipXmlElem)mergeTagPositions(findOpenCloseTags(text), findAutoCloseTag(text), Seq[(Int, Int)]())
+      else Seq[(Int, Int)]()
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
+    val (marked: String, tend: Int) = seq.foldLeft("", 0) {
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
+        val s = str + text.substring(lpos, termBegin) + presu(text.substring(termBegin, termEnd + 1))
         (s, termEnd + 1)
     }
     val marked2 = if (tend >= text.length) marked else marked + text.substring(tend)
@@ -93,27 +127,47 @@ class Highlighter {
     * @param curPos current position inside input text
     * @param text input text
     * @param terms the graph of DeCS descriptors/synonyms
-    * @return (Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
+    * @param seqElem sequence of (begin,end) positions of xml tags
+    * @return (Seq(initial position, final position, DeCS id, descriptor/synonym), Set(descriptor/synonym))
     */
   private def highlight(curPos: Int,
                         text: String,
-                        terms: Map[Char, CharSeq]): (Seq[(Int,Int, String, String)], Set[String]) = {
+                        terms: Map[Char, CharSeq],
+                        seqElem: Seq[(Int, Int)]): (Seq[(Int, Int, String, String)], Set[String]) = {
     val size = text.length
 
-    if (curPos == size) (Seq(),Set())
+    if (curPos == size) (Seq(), Set())
     else {
 //println(s"highlight:${text.substring(curPos)}")
-      findTerm(curPos, text, size, terms) match {
+      val (curPos2, seqElem2) = findNextValidPos(curPos, seqElem)
+      findTerm(curPos2, text, size, terms) match {
         case Some((endPos, id)) =>
-          val term = text.substring(curPos, endPos + 1)
-          val (seq, set) = highlight(endPos + 1, text, terms)
-          ((curPos, endPos, id, term) +: seq, set + term)
+          val term = text.substring(curPos2, endPos + 1)
+          val (seq, set) = highlight(endPos + 1, text, terms, seqElem2)
+          ((curPos2, endPos, id, term) +: seq, set + term)
         case None =>
-          findValidTermStart(curPos + 1, text, size) match {
-            case Some(pos) => highlight(pos, text, terms)
-            case None => (Seq(),Set())
+          val (curPos3, seqElem3) = findNextValidPos(curPos2 + 1, seqElem2)
+          findValidTermStart(curPos3, text, size) match {
+            case Some(pos) => highlight(pos, text, terms, seqElem3)
+            case None      => (Seq(), Set())
           }
       }
+    }
+  }
+
+  /**
+    * Find the next valid position, ie, a position that does not belong to the tuples (beginpos, endpos)
+    * @param curPos current position
+    * @param seqElem sequence of tuples (beginpos, endpos)
+    * @return (next valid position, original sequence less elements that are lesser than the next valid position)
+    */
+  private def findNextValidPos(curPos: Int,
+                               seqElem: Seq[(Int, Int)]): (Int, Seq[(Int, Int)]) = {
+    if (seqElem.isEmpty) (curPos, seqElem)
+    else {
+      val head = seqElem.head
+      if (curPos < head._1) (curPos, seqElem)
+      else findNextValidPos(head._2 + 1, seqElem.tail)
     }
   }
 
@@ -129,7 +183,7 @@ class Highlighter {
                        text: String,
                        size: Int,
                        terms: Map[Char, CharSeq]): Option[(Int, String)] = {
-    if (curPos == text.length) None
+    if (curPos >= text.length) None
     else terms.get(text(curPos)).flatMap((cseq: CharSeq) => findTerm(curPos + 1, text, size, cseq))
   }
 
@@ -145,21 +199,14 @@ class Highlighter {
                        text: String,
                        size: Int,
                        seq: CharSeq): Option[(Int, String)] = {
-    if (curPos == size) {
-      val x = getTermEnd(curPos, text, size, seq)
-      //println("findTerm saindo. curPos == text.length result=" + x)
-      x
+    if (curPos >= size) {
+      getTermEnd(curPos, text, size, seq)
     } else {
       val ch = text(curPos)
       //println(s"findTerm sub=${text.substring(curPos)} curPos=$curPos ch=$ch")
       seq.other.find(cs => cs.ch.equals(ch)) match {
-        case Some(cseq: CharSeq) =>
-          val x = findTerm(curPos + 1, text, size, cseq) orElse getTermEnd(curPos, text, size, seq)
-          //println("findTerm saindo. curPos" + curPos + " result=" + x)
-          x
-        case None =>
-          //println(s"findTerm saindo. Não tem nem a primeira letra: [$ch] curPos=$curPos")
-          getTermEnd(curPos, text, size, seq)
+        case Some(cseq: CharSeq) => findTerm(curPos + 1, text, size, cseq) orElse getTermEnd(curPos, text, size, seq)
+        case None => getTermEnd(curPos, text, size, seq)
       }
     }
   }
@@ -177,7 +224,7 @@ class Highlighter {
                          size: Int,
                          seq: CharSeq): Option[(Int, String)] = {
     val cond1 = curPos == size
-    lazy val cond2 = !text(curPos).isLetterOrDigit
+    lazy val cond2 = !Tools.isLetterOrDigit(text(curPos))
     lazy val cond3 = seq.other.exists(cs => cs.ch.equals(0.toChar))
     val bool = (cond1 || cond2) && cond3
 
@@ -193,7 +240,8 @@ class Highlighter {
   private def findValidTermStart(curPos: Int,
                                  text: String,
                                  size: Int): Option[Int] = {
-    (curPos until size).find(x => isValidTermStart(x, text, size))
+    if (curPos >= size) None
+    else (curPos until size).find(x => isValidTermStart(x, text, size))
   }
 
   /**
@@ -205,7 +253,64 @@ class Highlighter {
   private def isValidTermStart(curPos: Int,
                                text: String,
                                size: Int): Boolean =
-    (curPos == 0) || ((curPos < size) && !text(curPos - 1).isLetterOrDigit && text(curPos).isLetterOrDigit)
+    (curPos == 0) || ((curPos < size) && !Tools.isLetterOrDigit(text(curPos - 1)) && Tools.isLetterOrDigit(text(curPos)))
+
+  /**
+    * Create a sequence of ordered tuples composed by two sequences
+    * @param openClose first sequence of positions(begin, end)
+    * @param autoClose second sequence of positions(begin, end)
+    * @param auxSeq auxiliary sequence of positions(begin, end)
+    * @return an ordered sequence of tuples composed by two sequences
+    */
+  def mergeTagPositions(openClose: Seq[(Int, Int)],
+                        autoClose: Seq[(Int, Int)],
+                        auxSeq:    Seq[(Int, Int)]): Seq[(Int, Int)] = {
+    if (openClose.isEmpty) auxSeq ++ autoClose
+    else if (autoClose.isEmpty) auxSeq ++ openClose
+    else {
+      val openHead: (Int, Int) = openClose.head
+      val autoHead: (Int, Int) = autoClose.head
+      if (openHead._1 > autoHead._1) mergeTagPositions(openClose.tail, autoClose, auxSeq :+ openHead)
+      else mergeTagPositions(openClose, autoClose.tail, auxSeq :+ autoHead)
+    }
+  }
+
+  /**
+    * Finds all positions of xml elements  <x d='ccccc'>text</x>
+    * @param in input text
+    * @return a sequence of subtexts in the form of
+    *   (initial position of the open tag, end position of the open  tag),
+    *   (initial position of the close tag, end position of the close tag)
+    */
+  private def findOpenCloseTags(in: String): Seq[(Int, Int)] = {
+    val regex: Regex = "< *([^ >]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* *>([^<]*)< */ *\\1 *>".r
+
+    val iter: Iterator[Match] = regex.findAllMatchIn(in)
+    if (iter.isEmpty) Seq[(Int,Int)]()
+    else {
+      iter.foldLeft(Seq[(Int,Int)]()) {
+        case (seq: Seq[(Int, Int)], mat: Match) =>
+          seq ++ Seq(mat.start -> (mat.end - 1))
+      }
+    }
+  }
+
+  /**
+    * Finds all positions of xml elements  <x d='ccccc'>text/>
+    * @param in input text
+    * @return a sequence of subtexts in the form of (initial position of the tag, end position of the tag)
+    */
+  private def findAutoCloseTag(in: String): Seq[(Int, Int)] = {
+    val regex: Regex = "< *([^ />]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* */ *>".r
+
+    val iter: Iterator[Match] = regex.findAllMatchIn(in)
+    if (iter.isEmpty) Seq[(Int,Int)]()
+    else {
+      iter.foldLeft(Seq[(Int,Int)]()) {
+        case (seq: Seq[(Int, Int)], mat: Match) => seq :+ (mat.start -> (mat.end - 1))
+      }
+    }
+  }
 }
 
 object Highlighter extends App {
@@ -218,6 +323,7 @@ object Highlighter extends App {
     System.err.println("\t\t[-prefix=<prefix>]     - text to be placed before each descriptor/synonym")
     System.err.println("\t\t[-suffix=<suffix>]     - text to be placed after  each descriptor/synonym")
     System.err.println("\t\t[-encoding=<encoding>] - encoding of the input and output file")
+    System.err.println("\t\t[--skipXmlElem]        - if present, do not highlight text inside xml tags neither between them")
     System.exit(1)
   }
 
@@ -226,7 +332,8 @@ object Highlighter extends App {
   val parameters = args.foldLeft[Map[String,String]](Map()) {
     case (map,par) =>
       val split = par.split(" *= *", 2)
-      map + ((split(0).substring(1), split(1)))
+      if (split.size == 1) map + (split(0).substring(2) -> "")
+      else map + ((split(0).substring(1), split(1)))
   }
 
   val inFile = parameters("inFile")
@@ -235,13 +342,15 @@ object Highlighter extends App {
   val prefix = parameters.getOrElse("prefix", "<em>")
   val suffix = parameters.getOrElse("suffix", "</em>")
   val encoding = parameters.getOrElse("encoding", "utf-8")
+  val skipXmlElem = parameters.contains("skipXmlElem")
 
   val highlighter = new Highlighter()
   val terms: Map[String,String] = Tools.decs2Set(decs)
   val tree: Map[Char, CharSeq] = highlighter.createTermTree(terms)
-  val src = Source.fromFile(inFile, encoding)
-  val text = src.getLines().mkString("\n")
-  val (marked, seq, set) = highlighter.highlight(prefix, suffix, text, tree)
+  val src: BufferedSource = Source.fromFile(inFile, encoding)
+  val text: String = src.getLines().mkString("\n")
+  val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) =
+    highlighter.highlight(prefix, suffix, text, tree, skipXmlElem)
 
   if (set.isEmpty) println("No descriptors found.")
   else {
