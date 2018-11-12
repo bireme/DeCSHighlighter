@@ -284,13 +284,20 @@ class Highlighter {
     */
   private def findOpenCloseTags(in: String): Seq[(Int, Int)] = {
     val regex: Regex = "< *([^ >]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* *>([^<]*)< */ *\\1 *>".r
+    val regex2: Regex = "&lt; *([^ &]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* *&gt;.*?&lt; */ *\\1 *&gt;".r
 
     val iter: Iterator[Match] = regex.findAllMatchIn(in)
-    if (iter.isEmpty) Seq[(Int,Int)]()
-    else {
+    if (iter.isEmpty) {
+      val iter2: Iterator[Match] = regex2.findAllMatchIn(in)
+      if (iter2.isEmpty) Seq[(Int,Int)]()
+      else {
+        iter2.foldLeft(Seq[(Int,Int)]()) {
+          case (seq: Seq[(Int, Int)], mat: Match) => seq :+ (mat.start -> (mat.end - 1))
+        }
+      }
+    } else {
       iter.foldLeft(Seq[(Int,Int)]()) {
-        case (seq: Seq[(Int, Int)], mat: Match) =>
-          seq ++ Seq(mat.start -> (mat.end - 1))
+        case (seq: Seq[(Int, Int)], mat: Match) => seq :+ (mat.start -> (mat.end - 1))
       }
     }
   }
@@ -301,11 +308,19 @@ class Highlighter {
     * @return a sequence of subtexts in the form of (initial position of the tag, end position of the tag)
     */
   private def findAutoCloseTag(in: String): Seq[(Int, Int)] = {
-    val regex: Regex = "< *([^ />]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* */ *>".r
+    val regex: Regex = "< *([^ /]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* */ *>".r
+    val regex2: Regex = "&lt; *([^ /]{1,20})( +[a-zA-Z0-9]{1,10}=['\"][^'\"]{1,20}['\"])* */ *&gt;".r
 
     val iter: Iterator[Match] = regex.findAllMatchIn(in)
-    if (iter.isEmpty) Seq[(Int,Int)]()
-    else {
+    if (iter.isEmpty) {
+      val iter2: Iterator[Match] = regex2.findAllMatchIn(in)
+      if (iter2.isEmpty) Seq[(Int,Int)]()
+      else {
+        iter2.foldLeft(Seq[(Int,Int)]()) {
+          case (seq: Seq[(Int, Int)], mat: Match) => seq :+ (mat.start -> (mat.end - 1))
+        }
+      }
+    } else {
       iter.foldLeft(Seq[(Int,Int)]()) {
         case (seq: Seq[(Int, Int)], mat: Match) => seq :+ (mat.start -> (mat.end - 1))
       }

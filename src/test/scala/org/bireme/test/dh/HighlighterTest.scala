@@ -94,4 +94,20 @@ class HighlighterTest extends FlatSpec {
     println(s"text=$text seq=$seq seq2=$seq2")
     assert(text.equals("<h1 xxx='ant is an animal'/>My <em>ant</em> is one year old"))
   }
+
+  it should "not mark 'ant' inside a tag" in {
+    val str = "<h1>The ant is coming</h1>"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, map, true)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert(text.equals("<h1>The ant is coming</h1>"))
+  }
+
+  it should "mark 'ant' tag" in {
+    val str = "The ant is coming"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, map, true)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert(text.equals("The <em>ant</em> is coming"))
+  }
 }
