@@ -80,13 +80,20 @@ class Highlighter {
                 text: String,
                 terms: Map[Char, CharSeq],
                 skipXmlElem: Boolean): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
+    //println(s"[[$text]]")
     val text2 = Tools.uniformString(text)
     val seqElem: Seq[(Int, Int)] =
-      if (skipXmlElem)mergeTagPositions(findOpenCloseTags(text), findAutoCloseTag(text), Seq[(Int, Int)]())
+      if (skipXmlElem) {
+        val openClose = findOpenCloseTags(text)
+        val autoClose = findAutoCloseTag(text)
+        mergeTagPositions(openClose, autoClose, Seq[(Int, Int)]())
+      }
       else Seq[(Int, Int)]()
     val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
+    //println(s"seq=$seq")
     val (marked: String, tend: Int) = seq.foldLeft("", 0) {
       case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
+        //println(s"lpos=$lpos termBegin=$termBegin termEnd=$termEnd str=$str\n\n")
         val s = str + text.substring(lpos, termBegin) + prefix + text.substring(termBegin, termEnd + 1) + suffix
         (s, termEnd + 1)
     }
@@ -109,8 +116,11 @@ class Highlighter {
                 skipXmlElem: Boolean): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
     val text2 = Tools.uniformString(text)
     val seqElem: Seq[(Int, Int)] =
-      if (skipXmlElem)mergeTagPositions(findOpenCloseTags(text), findAutoCloseTag(text), Seq[(Int, Int)]())
-      else Seq[(Int, Int)]()
+      if (skipXmlElem) {
+        val openClose = findOpenCloseTags(text)
+        val autoClose = findAutoCloseTag(text)
+        mergeTagPositions(openClose, autoClose, Seq[(Int, Int)]())
+      } else Seq[(Int, Int)]()
     val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
     val (marked: String, tend: Int) = seq.foldLeft("", 0) {
       case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>

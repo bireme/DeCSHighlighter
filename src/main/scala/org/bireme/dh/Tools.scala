@@ -41,7 +41,10 @@ object Tools {
                 case (mp2, fld) => mp2 + (fld -> id)
               }
           }
-          getSubfield(rec, 23).foldLeft(map3) {
+          val map4 = getSubfield(rec, 23).foldLeft(map3) {
+            case (mp, subfld) => mp + (subfld -> id)
+          }
+          getSubfield(rec, 50).foldLeft(map4) {
             case (mp, subfld) => mp + (subfld -> id)
           }
         } else map2
