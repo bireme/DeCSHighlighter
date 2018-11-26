@@ -29,6 +29,9 @@ object Tools {
     * @return a map of descriptor -> id
     */
   def decs2Set(decsDir: String): Map[String,String] = {
+    // descriptors that should be avoided because are common words and have other meanings in other languages
+    val stopwords = Set("la", "foram")
+
     val mst = MasterFactory.getInstance(decsDir).open()
 
     val map: Map[String,String] = mst.iterator().asScala.foldLeft(Map[String,String]()) {
@@ -38,14 +41,20 @@ object Tools {
           val map3 = Seq(1,2,3).foldLeft(map2) {
             case (mp, tag) =>
               getField(rec, tag).foldLeft(mp) {
-                case (mp2, fld) => mp2 + (fld -> id)
+                case (mp2, fld) =>
+                  if (stopwords.contains(fld)) mp2
+                  else mp2 + (fld -> id)
               }
           }
           val map4 = getSubfield(rec, 23).foldLeft(map3) {
-            case (mp, subfld) => mp + (subfld -> id)
+            case (mp, subfld) =>
+              if (stopwords.contains(subfld)) mp
+              else mp + (subfld -> id)
           }
           getSubfield(rec, 50).foldLeft(map4) {
-            case (mp, subfld) => mp + (subfld -> id)
+            case (mp, subfld) =>
+              if (stopwords.contains(subfld)) mp
+              else mp + (subfld -> id)
           }
         } else map2
     }
