@@ -2,7 +2,7 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.13.0" //"2.12.8"
+scalaVersion := "2.13.1" //"2.12.8"
 
 val circeVersion = "0.12.0-M4" //"0.11.1" //"0.10.0"
 val scalajVersion = "2.4.2" //"2.4.1"
