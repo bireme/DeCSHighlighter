@@ -83,7 +83,7 @@ class HighlightServlet extends HttpServlet {
       val showDescriptors: Boolean = (sDescriptors != null) && (sDescriptors.isEmpty || sDescriptors.toBoolean)
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree, true)
+      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree)
       val result: mutable.Buffer[(String, Json)] = mutable.Buffer[(String, Json)]()
 
       // Show all output (text, positions and descriptors) if the showText, showPositions and showDescriptors parameters
@@ -103,7 +103,7 @@ class HighlightServlet extends HttpServlet {
       response.setContentType("application/json")
 
       // Transform the json object into a String and print it
-      val resultStr = Json.obj(result: _*).spaces2
+      val resultStr = Json.obj(result.toSeq: _*).spaces2
       val writer: PrintWriter = response.getWriter
       writer.write(resultStr)
       writer.close()

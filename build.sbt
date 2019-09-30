@@ -2,14 +2,13 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.13.0" //"2.12.8"
 
-val circeVersion = "0.10.0" // "0.9.3"
-val scalajVersion = "2.4.1"
-val servletVersion = "2.5"
+val circeVersion = "0.12.0-M4" //"0.11.1" //"0.10.0"
+val scalajVersion = "2.4.2" //"2.4.1"
 val servletApiVersion = "4.0.1" //"3.0.1"
-val hairyfotrVersion = "0.1.17"
-val scalaTestVersion = "3.0.5"
+//val hairyfotrVersion = "0.1.17"
+val scalaTestVersion = "3.2.0-M1" //"3.1.0-SNAP13" //"3.0.8" //"3.0.7"
 val supersafeVersion = "1.1.7"
 
 libraryDependencies ++= Seq(
@@ -17,10 +16,9 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
   "org.scalaj" %% "scalaj-http" % scalajVersion,
-  "javax.servlet" % "servlet-api" % servletVersion % "provided",
   "javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
   "org.scalactic" %% "scalactic" % scalaTestVersion,
-  "org.scalatest" % "scalatest_2.12" % scalaTestVersion % "test"
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
   //"com.artima.supersafe" %% "supersafe" % supersafeVersion
 )
 
@@ -30,7 +28,7 @@ trapExit := false
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
-addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % hairyfotrVersion)
+//addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % hairyfotrVersion)
 
 enablePlugins(JettyPlugin)
 

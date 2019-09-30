@@ -72,7 +72,7 @@ class HighlightWebServlet extends HttpServlet {
     val result: String = if ((doc == null) || doc.isEmpty ) {
       html.replace("{{text}}", "").replace("{{descriptors}}", "")
     } else {
-      val (marked: String, _, set: Seq[String]) = highlighter.highlight(presu, doc, tree, true)
+      val (marked: String, _, set: Seq[String]) = highlighter.highlight(presu, doc, tree)
       html.replace("{{text}}", marked).replace("{{descriptors}}", set.mkString("\n"))
     }
     response.setCharacterEncoding("UTF-8")

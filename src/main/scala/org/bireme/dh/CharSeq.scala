@@ -20,17 +20,8 @@ import scala.collection.mutable
   * date: September - 2018
   */
 case class CharSeq(ch: Char,
-                   other: mutable.Set[CharSeq],
-                   id: StringBuilder) {
-  require(other != null)
-  require(id != null)
-
-  def +=(ch: Char): mutable.Set[CharSeq] = {
-    other += CharSeq(ch)
-    other
-  }
-}
-
+                   other: mutable.Buffer[CharSeq],   // Changed from Set because Memory overflow error
+                   id: StringBuilder)
 object CharSeq {
-  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.Set[CharSeq](), new mutable.StringBuilder())
+  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.Buffer[CharSeq](), new mutable.StringBuilder())
 }
