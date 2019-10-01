@@ -136,8 +136,10 @@ object Tools {
     val inlc: String = in.toLowerCase()
     val s1: String = Normalizer.normalize(inlc, Form.NFD)
 
-    val s2: String = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+    //val s2: String = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+    val s2: String = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
     //val s2 = s1.replaceAll("([a-z])[\\p{InCombiningDiacriticalMarks}]", "$1")
+
     val arr: Array[Int] = getOriginalStrPos(inlc, s2)
 
     (s1, s2, arr.toIndexedSeq)
@@ -177,7 +179,7 @@ object Tools {
                                 auxArr: Array[Int]): Array[Int] = {
     if ((originalStrPos == originalStr.length) || (transformedStrPos == transformedStr.length)) {
       auxArr
-    } else if (originalStr(originalStrPos).getType == Character.NON_SPACING_MARK) {
+    } else if (originalStr(originalStrPos).getType == Character.NON_SPACING_MARK) {  // Graphical accent
       getOriginalStrPos(originalStr,
                         originalStrPos + 1,
                         transformedStr,
