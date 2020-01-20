@@ -29,7 +29,7 @@ object Tools {
     */
   def decs2Set(decsDir: String): Map[String,String] = {
     // descriptors that should be avoided because:
-    val stopwords = Set("la", "foram", "amp") // are common words and have other meanings in other languages
+    val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
                     //Set("methods", "metodos", "methodology", "metodologia") // appear as section names of medline document
 
     val mst: Master = MasterFactory.getInstance(decsDir).open()
@@ -107,7 +107,7 @@ object Tools {
   }
 
   /**
-    * Converts all input characters into lower case without graphical accents
+    * Convert the input string characters into lower case without graphical accents (diacriticals)
     *
     * @param in input string to be converted
     * @return the converted string
@@ -122,14 +122,25 @@ object Tools {
   }
 
   /**
-    * Converts all input characters into lower case without graphical accents
+    * Convert the input string characters into lower case without graphical accents (diacriticals)
     *
     * @param in input string to be converted
-    * @return (the original string with accents put side by side with the letter they use to accent
-    *         the converted string,
+    * @return (the converted string,
     *         an array where the index is the position of the character in the normalized string and its content is
     *         the position of the character in the original string)
     */
+  def uniformString2(in: String): (String, Seq[Int]) = {
+    require(in != null)
+
+    val inlc: String = in.toLowerCase()
+    val noOL: Seq[(Int, Int)] = getNoOtherLetter(inlc)
+    val str: String = removeDiacriticals(inlc, 0, inlc.length, noOL)
+    val arr: Array[Int] = getOriginalStrPos(inlc, str)
+
+    (str, arr.toIndexedSeq)
+  }
+
+  /*
   def uniformString2(in: String): (String, String, Seq[Int]) = {
     require(in != null)
 
@@ -139,10 +150,92 @@ object Tools {
     //val s2: String = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
     val s2: String = s1.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
     //val s2 = s1.replaceAll("([a-z])[\\p{InCombiningDiacriticalMarks}]", "$1")
+    print("inlc=> ")
+    inlc.foreach(ch=> print(s"$ch(${ch.toInt}) "))
+    println()
+    print("s1=> ")
+    s1.foreach(ch=> print(s"$ch(${ch.toInt}) "))
+    println()
+    print("s2=> ")
+    s2.foreach(ch=> print(s"$ch(${ch.toInt}) "))
+    println()
 
     val arr: Array[Int] = getOriginalStrPos(inlc, s2)
 
     (s1, s2, arr.toIndexedSeq)
+  }
+   */
+
+  /**
+    * @param in input string
+    * @return a sequence of intervals (beginPos, endPos) of characters that are not other letters (characters that
+    *         are not usual letters (A-Z,a-z,0-9,accents,usual symbols), are for example characters of china, russian,
+    *         etc alphabet
+    */
+  private def getNoOtherLetter(in: String): Seq[(Int,Int)] =
+    getNoOtherLetter(in, 0, 0, in.length, Seq[(Int,Int)]())
+
+  /**
+    *
+    * @param in input string
+    * @param beginPos initial position of the input string of the next interval
+    * @param curPos current position of the input string
+    * @param length input string length
+    * @param auxSeq auxiliary seq
+    * @return a sequence of intervals (beginPos, endPos) of characters that are not other letters (characters that
+    *         are not usual letters (A-Z,a-z,0-9,accents,usual symbols), are for example characters of china, russian,
+    *         etc alphabet
+    */
+  @scala.annotation.tailrec
+  private def getNoOtherLetter(in: String,
+                               beginPos: Int,
+                               curPos: Int,
+                               length: Int,
+                               auxSeq: Seq[(Int,Int)]): Seq[(Int,Int)] = {
+    if (length == 0) Seq[(Int,Int)]()
+    else if (curPos == length) {
+      if (beginPos < curPos) auxSeq :+ (beginPos, curPos - 1)
+      else auxSeq
+    } else {
+      val ch = in(curPos)
+      if (ch.getType == Character.OTHER_LETTER) {
+        if (beginPos == curPos) getNoOtherLetter(in, beginPos + 1, curPos + 1, length, auxSeq)
+        else getNoOtherLetter(in, curPos + 1, curPos + 1, length, auxSeq :+ (beginPos, curPos - 1))
+      } else {
+        getNoOtherLetter(in, beginPos, curPos + 1, length, auxSeq)
+      }
+    }
+  }
+
+  /**
+    * Remove diacriticals from an input string
+    * @param text the input string
+    * @param curPos current position of the input string
+    * @param length size of the input string
+    * @param noOtherLetter sequence of positions (beginPos, endPos) of the input string to have diacriticals removed
+    * @return the input string with diacriticals removed
+    */
+  private def removeDiacriticals(text: String,
+                                 curPos: Int,
+                                 length: Int,
+                                 noOtherLetter: Seq[(Int,Int)]): String = {
+    if (curPos >= length) ""
+    else {
+      noOtherLetter.headOption match {
+        case Some(head) =>
+          val begin = head._1
+          if (curPos < begin) {
+            text.substring(curPos, begin) + removeDiacriticals(text, begin, length, noOtherLetter)
+          } else {
+            val end = head._2
+            val s1 = text.substring(curPos, end + 1)
+            val s2: String = Normalizer.normalize(s1, Form.NFD)
+            val s3: String = s2.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
+            s3 + removeDiacriticals(text, end + 1, length, noOtherLetter.tail)
+          }
+        case None => text.substring(curPos)
+      }
+    }
   }
 
   /**
@@ -180,13 +273,15 @@ object Tools {
     if ((originalStrPos == originalStr.length) || (transformedStrPos == transformedStr.length)) {
       auxArr
     } else if (originalStr(originalStrPos).getType == Character.NON_SPACING_MARK) {  // Graphical accent
+      if (auxArr(transformedStrPos) == 0) auxArr(transformedStrPos) = originalStrPos
       getOriginalStrPos(originalStr,
                         originalStrPos + 1,
                         transformedStr,
                         transformedStrPos,
                         auxArr)
     } else {
-      auxArr(transformedStrPos) = originalStrPos
+      //auxArr(transformedStrPos) = originalStrPos
+      if (auxArr(transformedStrPos) == 0) auxArr(transformedStrPos) = originalStrPos
       getOriginalStrPos(originalStr,
                         originalStrPos + 1,
                         transformedStr,

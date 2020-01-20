@@ -51,7 +51,7 @@ object Str2HexFile extends App {
                                            StandardOpenOption.CREATE,
                                            StandardOpenOption.TRUNCATE_EXISTING,
                                            StandardOpenOption.WRITE)
-    fc.write(bb.flip())
+    fc.write(bb.flip().asInstanceOf[ByteBuffer]) // .asInstanceOf[ByteBuffer]) to avoid overloaded method error
     fc.close()
   }
 

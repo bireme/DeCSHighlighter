@@ -22,7 +22,6 @@ import scala.collection.mutable
   * date: September - 2018
   */
 class HighlightServlet extends HttpServlet {
-  val highlighter: Highlighter = new Highlighter()
   var tree: Map[Char, CharSeq] = _
 
   /**
@@ -38,7 +37,7 @@ class HighlightServlet extends HttpServlet {
 
     val terms: Predef.Map[String, String] = Tools.decs2Set(decsPath)
 
-    tree = highlighter.createTermTree(terms)
+    tree = Highlighter.createTermTree(terms)
 
     println("HighlightServlet is listening ...")
   }
@@ -83,7 +82,7 @@ class HighlightServlet extends HttpServlet {
       val showDescriptors: Boolean = (sDescriptors != null) && (sDescriptors.isEmpty || sDescriptors.toBoolean)
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix, doc, tree)
+      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = Highlighter.highlight(prefix, suffix, doc, tree)
       val result: mutable.Buffer[(String, Json)] = mutable.Buffer[(String, Json)]()
 
       // Show all output (text, positions and descriptors) if the showText, showPositions and showDescriptors parameters

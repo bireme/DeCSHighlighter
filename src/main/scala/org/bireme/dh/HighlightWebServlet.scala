@@ -20,7 +20,6 @@ import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
   **/
 class HighlightWebServlet extends HttpServlet {
 
-  var highlighter: Highlighter = _
   var tree: Map[Char, CharSeq] = _
 
   /**
@@ -36,8 +35,7 @@ class HighlightWebServlet extends HttpServlet {
 
     val terms: Predef.Map[String, String] = Tools.decs2Set(decsPath)
 
-    highlighter = new Highlighter()
-    tree = highlighter.createTermTree(terms)
+    tree = Highlighter.createTermTree(terms)
     println("HighlightWebServlet is listening ...")
   }
 
@@ -72,7 +70,7 @@ class HighlightWebServlet extends HttpServlet {
     val result: String = if ((doc == null) || doc.isEmpty ) {
       html.replace("{{text}}", "").replace("{{descriptors}}", "")
     } else {
-      val (marked: String, _, set: Seq[String]) = highlighter.highlight(presu, doc, tree)
+      val (marked: String, _, set: Seq[String]) = Highlighter.highlight(presu, doc, tree)
       html.replace("{{text}}", marked).replace("{{descriptors}}", set.mkString("\n"))
     }
     response.setCharacterEncoding("UTF-8")

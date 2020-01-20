@@ -14,12 +14,12 @@ import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
 /**
-  * Class to highlight all DeCS descriptors and synonyms of an input text
+  * Object to highlight all DeCS descriptors and synonyms of an input text
   *
   * author: Heitor Barbieri
   * date: September - 2018
 */
-class Highlighter {
+object Highlighter {
   /**
   * Given a list of DeCS terms/synonyms, create a graph with then where each letter of term is a node of the graph
     * @param terms a map of descriptor -> DeCS id
@@ -80,10 +80,11 @@ class Highlighter {
                 suffix: String,
                 text: String,
                 terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
-    val (_, text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
+    val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem = invertPos(tags, 0, text2.length)
-    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) =
+      highlight(0, text2, text2.length, terms, seqElem)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -109,10 +110,10 @@ class Highlighter {
   def highlight(presu: String => String,
                 text: String,
                 terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
-    val (_, text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
+    val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem = invertPos(tags, 0, text2.length)
-    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, terms, seqElem)
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, text2.length, terms, seqElem)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -131,28 +132,28 @@ class Highlighter {
   * Highlights all DeCS descriptors/synonyms of an input text
     * @param curPos current position inside input text
     * @param text input text (without accents)
+    * @param length input text (without accents) length
     * @param terms the graph of DeCS descriptors/synonyms
     * @param seqElem sequence of (begin,end) positions of xml tags
     * @return (Seq(initial position, final position, DeCS id, descriptor/synonym), Set(descriptor/synonym))
     */
   private def highlight(curPos: Int,
                         text: String,
+                        length: Int,
                         terms: Map[Char, CharSeq],
                         seqElem: Seq[(Int, Int)]): (Seq[(Int, Int, String, String)], Set[String]) = {
-    val size = text.length
-
     findNextValidPos(curPos, seqElem) match {
       case Some((curPos2, range, seqElem2)) =>
         findValidTermStart(curPos2, text, range._2) match {
           case Some(curPos3) =>
-            findTerm(curPos3, text, size, terms) match {
+            findTerm(curPos3, text, length, terms) match {
               case Some((endPos, id)) =>
                 val term = text.substring(curPos3, endPos + 1)
-                val (seq, set) = highlight(endPos + 1, text, terms, seqElem2)
+                val (seq, set) = highlight(endPos + 1, text, length, terms, seqElem2)
                 ((curPos3, endPos, id, term) +: seq, set + term)
-              case None => highlight(curPos3 + 1, text, terms, seqElem2)
+              case None => highlight(curPos3 + 1, text, length, terms, seqElem2)
             }
-          case None => highlight(range._2 + 1, text, terms, seqElem2)
+          case None => highlight(range._2 + 1, text, length, terms, seqElem2)
         }
 
       case None => (Seq[(Int, Int, String, String)](), Set[String]())
@@ -350,10 +351,10 @@ class Highlighter {
   }
 }
 
-object Highlighter extends App {
+object HighlighterApp extends App {
   private def usage(): Unit = {
     System.err.println("Application to highlights all DeCS descriptors and synonyms present in an input file.\n")
-    System.err.println("usage: Highlighter")
+    System.err.println("usage: HighlighterApp")
     System.err.println("\t\t-inFile=<inFile>       - input file to be highlighted")
     System.err.println("\t\t-outFile=<outFile>     - the output file with the highlighted text")
     System.err.println("\t\t-decs=<path>           - path to the Isis database with the DeCS")
@@ -379,18 +380,19 @@ object Highlighter extends App {
   val suffix = parameters.getOrElse("suffix", "</em>")
   val encoding = parameters.getOrElse("encoding", "utf-8")
 
-  val highlighter = new Highlighter()
   val terms: Map[String,String] = Tools.decs2Set(decs)
-  val tree: Map[Char, CharSeq] = highlighter.createTermTree(terms)
+  val tree: Map[Char, CharSeq] = Highlighter.createTermTree(terms)
   val src: BufferedSource = Source.fromFile(inFile, encoding)
   val text: String = src.getLines().mkString("\n")
   val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) =
-    highlighter.highlight(prefix, suffix, text, tree)
+    Highlighter.highlight(prefix, suffix, text, tree)
 
   if (seq.isEmpty) println("No descriptors found.")
   else {
     println("Descriptors found:")
     seq.foreach(tuple => println(s"(${tuple._1},${tuple._2}) - ${tuple._4}"))
+    println("\nMarked text:")
+    println(marked)
     //println("Positions:")
     //seq.foreach(pos => println(pos))
     val writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFile), encoding))
