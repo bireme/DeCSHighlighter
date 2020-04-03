@@ -2,23 +2,25 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.13.1" // "2.12.9"
+scalaVersion := "2.13.1"
 
-val circeVersion = "0.13.0-M2" //"0.12.0-M4" //"0.11.1" //"0.10.0"
+val playJsonVersion = "2.8.1"
 val scalajVersion = "2.4.2" //"2.4.1"
 val servletApiVersion = "4.0.1" //"3.0.1"
 //val hairyfotrVersion = "0.1.17"
-val scalaTestVersion = "3.2.0-M2" //"3.1.0-SNAP13" //"3.0.8" //"3.0.7"
+val scalaTestVersion = "3.3.0-SNAP2" //"3.2.0-M2"
 val supersafeVersion = "1.1.7"
+val luceneVersion = "8.5.0" //"8.4.1"
 
 libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core" % circeVersion,
-  "io.circe" %% "circe-generic" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion,
+  "com.typesafe.play" %% "play-json" % playJsonVersion,
   "org.scalaj" %% "scalaj-http" % scalajVersion,
   "javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
+  "org.apache.lucene" % "lucene-core" % luceneVersion,
+  "org.apache.lucene" % "lucene-analyzers-common" % luceneVersion,
   "org.scalactic" %% "scalactic" % scalaTestVersion,
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+
   //"com.artima.supersafe" %% "supersafe" % supersafeVersion
 )
 
@@ -38,3 +40,10 @@ javaOptions in Jetty ++= Seq(
 )
 
 containerPort := 7171
+
+assemblyMergeStrategy in assembly := {
+  case "module-info.class" => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}

@@ -23,5 +23,5 @@ case class CharSeq(ch: Char,
                    other: mutable.Buffer[CharSeq],   // Changed from Set because Memory overflow error
                    id: StringBuilder)
 object CharSeq {
-  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.Buffer[CharSeq](), new mutable.StringBuilder())
+  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.ListBuffer[CharSeq](), new mutable.StringBuilder(0))
 }

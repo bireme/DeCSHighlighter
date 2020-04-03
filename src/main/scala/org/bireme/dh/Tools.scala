@@ -22,12 +22,12 @@ import bruma.master.{Master, MasterFactory, Record}
   **/
 object Tools {
   /**
-    * Create a set of descriptors, qualifiers and synonyms of the DeCS
+    * Create a map of descriptors, qualifiers and synonyms of the DeCS
     *
     * @param decsDir directory to the Isis DeCS database
     * @return a map of descriptor -> id
     */
-  def decs2Set(decsDir: String): Map[String,String] = {
+  def decs2MapIsis(decsDir: String): Map[String,String] = {
     // descriptors that should be avoided because:
     val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
                     //Set("methods", "metodos", "methodology", "metodologia") // appear as section names of medline document

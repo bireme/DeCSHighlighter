@@ -34,12 +34,16 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>Parameter:</p>
         <p>&nbsp;&nbsp;<b>document=</b> the input text to be highlighted</p>
         <p>Optional parameters:</p>
-        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptor/synonym. Default value is '&lt;em&gt;'</p>
-        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptor/synonym. Default value is '&lt;/em&gt;'</p>
-        <p>&nbsp;&nbsp;<b>showText=</b> outputs the highligted text</p>
-        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptor/synonym and the respective DeCS identifier</p>
-        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptor/synonym(s)</p>
-        <p>If showText, showPositions and showDescriptors parameters are all absent, then the text, positions and descriptors are displayed.</p>
+        <p>&nbsp;&nbsp;<b>scanLang=</b> the language to be used to find terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. Default value is scan in all languages.</p>
+        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptor/synonym. Default value is '&lt;em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptor/synonym. Default value is '&lt;/em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>outLang=</b> language used to output terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent the terms/synonyms will be returned in the same language as found in the text.</p>
+        <p>&nbsp;&nbsp;<b>pubType=</b> the publication type of the document. Valid values are: 'h', 'q' and 't'. If absent the document type will not be considered.</p>
+        <p>&nbsp;&nbsp;<b>scanSynonyms=</b> indicate if the synonyms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showText=</b> outputs the highligted text. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptor/synonym and the respective DeCS identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptor/synonym(s). Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>onlyPreCod=</b> indicate if the only precodified documents should be scanned. Valid values are: 't' or 'f'. Default value is 'f'.</p>
         <br/>
         <p>Example input:
         <p>&nbsp;&nbsp;<i>http://&lt;host&gt;:&lt;port&gt;/serv?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
@@ -60,17 +64,16 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
             ]
           }</pre></p>
         <p>Where:</p>
-        <p>&nbsp;&nbsp;<b>text</b> - outputs the highlighted input text</p>
-        <p>&nbsp;&nbsp;<b>positions</b> - indicates the begin and the end positions for each descriptor/synonym in the input text and its DeCs indentifier</p>
-        <p>&nbsp;&nbsp;<b>descriptors</b> - shows each descriptor/synonym found.</p>
+        <p>&nbsp;&nbsp;<b>text</b> - shows the highlighted input text.</p>
+        <p>&nbsp;&nbsp;<b>positions</b> - shows the begin and the end positions for each descriptor/synonym in the input text, the DeCs indentifier and DeCS descriptor/synonym.</p>
+        <p>&nbsp;&nbsp;<b>descriptors</b> - shows each descriptor found.</p>
 
         <h2>Example application:</h2>
-        <p>Description: A <a href="app">web application</a> that displays the highlighted input document.</p>
-        <p>Path: <i>http://&lt;host&gt;:&lt;port&gt;/app</i></p>
+        <p>A <a href="app">web application</a> that displays the highlighted input document.</p>
         <br/>
         <p><pre>
 DeCSHighlighter © Pan American Health Organization, 2018.
-See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt
+See License at: <a href="https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt">https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt</a>
         </pre></p>
     </body>
 </html>

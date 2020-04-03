@@ -7,25 +7,129 @@
 
 package org.bireme.dh
 
-import java.io.{BufferedWriter, FileOutputStream, OutputStreamWriter}
+import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
+import java.nio.file.Path
 
+import org.apache.lucene.document.Document
+import org.apache.lucene.index.{DirectoryReader, Term}
+import org.apache.lucene.search.{IndexSearcher, MatchAllDocsQuery, Query, ScoreDoc, TermQuery, TopDocs}
+import org.apache.lucene.store.FSDirectory
+
+import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
+import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 
 /**
-  * Object to highlight all DeCS descriptors and synonyms of an input text
+  * The configuration class used to filter retrieved documents
+  * @param scanLang language to be used to find terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'
+  * @param outLang language used to output terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'
+  * @param pubType the publication type of the document. Valid values are: 'h', 'q' and 't'
+  * @param scanDescriptors indicate if the descriptors should be scanned.
+  * @param scanSynonyms indicate if the synonyms should be scanned.
+  * @param onlyPreCod indicate if the only precodified documents should be scanned.
+  */
+case class Config(
+  scanLang: Option[String],
+  outLang: Option[String],
+  pubType: Option[Char],
+  scanDescriptors: Boolean,
+  scanSynonyms: Boolean,
+  onlyPreCod: Boolean
+)
+
+/**
+  * Class to highlight all DeCS descriptors and synonyms of an input text
   *
   * author: Heitor Barbieri
   * date: September - 2018
 */
-object Highlighter {
+class Highlighter(decsPath: String) {
+  val indexPath: Path = new File(decsPath).toPath
+  val directory: FSDirectory = FSDirectory.open(indexPath)
+  val ireader: DirectoryReader = DirectoryReader.open(directory)
+  val isearcher: IndexSearcher = new IndexSearcher(ireader)
+  val terms: Map[Char, CharSeq] = createTermTree(decs2Map(isearcher))
+
+  def close(): Unit = {
+    ireader.close()
+    directory.close()
+  }
+
+  /**
+    * Create a map of descriptors, qualifiers and synonyms of the DeCS
+    *
+    * @param isearcher Lucene search object
+    * @return a map of descriptor -> id
+    */
+  private def decs2Map(isearcher: IndexSearcher): Map[String,String] = {
+    // descriptors that should be avoided because:
+    //val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
+    val map: mutable.Map[String, String] = mutable.Map[String,String]()
+    val query: Query = new MatchAllDocsQuery()
+
+    getNextDoc(isearcher, query).foreach {
+      doc =>
+        val id: String = doc.get("id")
+        val term: String = doc.get("term_normalized")
+//println(s"id=$id term=$term")
+        map += (term -> id)
+    }
+    map.toMap
+  }
+
+  /**
+    * Create a lazy list of documents retrieved by a search expression
+    * @param isearcher Lucene search object
+    * @param query search expression
+    * @return a lazy list of the retrieved documents
+    */
+  private def getNextDoc(isearcher: IndexSearcher,
+                         query: Query): LazyList[Document] = {
+    getNextDoc(isearcher, query, None, 0)
+  }
+
+  private def getNextDoc(isearcher: IndexSearcher,
+                         query: Query,
+                         top: Option[TopDocs],
+                         curIndex: Int): LazyList[Document] = {
+    val curIndex2 = curIndex % 1000
+    //println(s"getNextDoc curIndex=$curIndex curIndex2=$curIndex2")
+    //val total: Long = top.map(_.totalHits.value).getOrElse(0)
+
+    val total: Int = top.map(_.scoreDocs.length).getOrElse(0)
+    val (index: Int, topDocs: TopDocs) = top match {
+      case Some(topdocs) =>
+        curIndex2 match {
+          case cur if cur < (total - 1) => (cur, topdocs)
+          case cur if total == 0 => (cur, topdocs)
+          case _ => (0, loadTopDocs(isearcher, query, Some(topdocs.scoreDocs(total.toInt - 1))))
+        }
+      case None => (0, loadTopDocs(isearcher, query, None))
+    }
+
+    //if (topDocs.totalHits.value > 0) {
+    if (topDocs.scoreDocs.length > 0) {
+      isearcher.doc(topDocs.scoreDocs(index).doc) #:: getNextDoc(isearcher, query, Some(topDocs), curIndex + 1)
+    } else LazyList.empty
+  }
+
+  private def loadTopDocs(isearcher: IndexSearcher,
+                          query: Query,
+                          last: Option[ScoreDoc]): TopDocs = {
+     last match {
+       case Some(lst) => isearcher.searchAfter(lst, query, 1000)
+       case None => isearcher.search(query, 1000)
+     }
+  }
+
   /**
   * Given a list of DeCS terms/synonyms, create a graph with then where each letter of term is a node of the graph
     * @param terms a map of descriptor -> DeCS id
     * @return a map of initial letter of the descriptor -> a sequence of CharSeq
     */
-  def createTermTree(terms: Map[String,String]): Map[Char, CharSeq] = {
+  private def createTermTree(terms: Map[String,String]): Map[Char, CharSeq] = {
     terms.foldLeft(Map[Char, CharSeq]()) {
       case(map, term) =>
         val descr: String = term._1
@@ -61,7 +165,7 @@ object Highlighter {
       seq.other.find(cs => cs.ch.equals(term.head)) match {
         case Some(cseq) => insertTerm(cseq, term.tail, id)
         case None =>
-          val cseq = CharSeq(term.head)
+          val cseq: CharSeq = CharSeq(term.head)
           seq.other += cseq
           insertTerm(cseq, term.tail, id)
       }
@@ -73,18 +177,17 @@ object Highlighter {
     * @param prefix a prefix to be placed before a found descriptor/synonym
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
-    * @param terms the graph of DeCS descriptors/synonyms
     * @return (the input text highlighted, Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
     */
   def highlight(prefix: String,
                 suffix: String,
                 text: String,
-                terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
-    val seqElem = invertPos(tags, 0, text2.length)
+    val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
     val (seq: Seq[(Int, Int, String, String)], set: Set[String]) =
-      highlight(0, text2, text2.length, terms, seqElem)
+      highlight(0, text2, text2.length, seqElem, conf)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -94,8 +197,8 @@ object Highlighter {
         val s: String = str + text.substring(lpos, teBegin) + prefix + text.substring(teBegin, teEnd + 1) + suffix
         (s, teEnd + 1)
     }
-    val marked2 = if (tend >= text.length) marked else marked + text.substring(tend)
-    val seq2 = seq.map(x => (seqPos(x._1), seqPos(x._2), x._3, x._4))
+    val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
+    val seq2: Seq[(Int, Int, String, String)] = seq.map(x => (seqPos(x._1), seqPos(x._2), x._3, x._4))
 
     (marked2, seq2, set.toSeq.sorted)
   }
@@ -104,16 +207,16 @@ object Highlighter {
     * Highlights all DeCS descriptors/synonyms of an input text
     * @param presu a prefix/suffix function that marks (put tags) the descriptor/synonym
     * @param text the input text to be highlighted
-    * @param terms the graph of DeCS descriptors/synonyms
     * @return (the input text highlighted, Seq(initial position, final position, DeCS id, descriptor/synonym), Seq(descriptor/synonym))
     */
   def highlight(presu: String => String,
                 text: String,
-                terms: Map[Char, CharSeq]): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String)], Seq[String]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
-    val seqElem = invertPos(tags, 0, text2.length)
-    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, text2.length, terms, seqElem)
+    val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
+    val (seq: Seq[(Int, Int, String, String)], set: Set[String]) =
+      highlight(0, text2, text2.length, seqElem, conf)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -123,8 +226,8 @@ object Highlighter {
         val s = str + text.substring(lpos, teBegin) + presu(text.substring(teBegin, teEnd + 1))
         (s, teEnd + 1)
     }
-    val marked2 = if (tend >= text.length) marked else marked + text.substring(tend)
-    val seq2 = seq.map(x => (seqPos(x._1), seqPos(x._2), x._3, x._4))
+    val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
+    val seq2: Seq[(Int, Int, String, String)] = seq.map(x => (seqPos(x._1), seqPos(x._2), x._3, x._4))
 
     (marked2, seq2, set.toSeq.sorted)
   }
@@ -133,35 +236,40 @@ object Highlighter {
     * @param curPos current position inside input text
     * @param text input text (without accents)
     * @param length input text (without accents) length
-    * @param terms the graph of DeCS descriptors/synonyms
     * @param seqElem sequence of (begin,end) positions of xml tags
     * @return (Seq(initial position, final position, DeCS id, descriptor/synonym), Set(descriptor/synonym))
     */
   private def highlight(curPos: Int,
                         text: String,
                         length: Int,
-                        terms: Map[Char, CharSeq],
-                        seqElem: Seq[(Int, Int)]): (Seq[(Int, Int, String, String)], Set[String]) = {
+                        seqElem: Seq[(Int, Int)],
+                        conf: Config): (Seq[(Int, Int, String, String)], Set[String]) = {
     findNextValidPos(curPos, seqElem) match {
       case Some((curPos2, range, seqElem2)) =>
         findValidTermStart(curPos2, text, range._2) match {
           case Some(curPos3) =>
-            findTerm(curPos3, text, length, terms) match {
+            findTerm(curPos3, text, range._2) match {
               case Some((endPos, id)) =>
-                val term = text.substring(curPos3, endPos + 1)
-                val (seq, set) = highlight(endPos + 1, text, length, terms, seqElem2)
-                ((curPos3, endPos, id, term) +: seq, set + term)
-              case None => highlight(curPos3 + 1, text, length, terms, seqElem2)
+                val term: String = text.substring(curPos3, endPos + 1)
+                getDesiredTerm(term, openDocument(id), conf) match {
+                  case Some(doc) =>
+                    val (seq, set) = highlight(endPos + 1, text, length, seqElem2, conf)
+                    val outTerm: String = Option(doc.get("term")).getOrElse("")
+                    val ret1: (Seq[(Int, Int, String, String)], Set[String]) = ((curPos3, endPos, id, outTerm) +: seq, set + outTerm)
+                    ret1
+                  case None => highlight(endPos + 1, text, length, seqElem2, conf)
+                }
+              case None =>
+                highlight(curPos3 + 1, text, length, seqElem2, conf)
             }
-          case None => highlight(range._2 + 1, text, length, terms, seqElem2)
+          case None => highlight(range._2 + 1, text, length, seqElem2, conf)
         }
-
       case None => (Seq[(Int, Int, String, String)](), Set[String]())
     }
   }
 
   /**
-    * Find the next valid position, given a seq of valid positions (seqElem)
+    * Find the next valid position (element of seqElem), given a seq of valid positions (seqElem)
     *
     * @param curPos current position
     * @param seqElem sequence of tuples (beginpos, endpos) of valid positions
@@ -172,7 +280,7 @@ object Highlighter {
                                seqElem: Seq[(Int, Int)]): Option[(Int, (Int, Int), Seq[(Int, Int)])] = {
     if (seqElem.isEmpty) None
     else {
-      val head = seqElem.head
+      val head: (Int, Int) = seqElem.head
       if (curPos <= head._1) Some(head._1, seqElem.head, seqElem)
       else if (curPos <= head._2) Some(curPos, seqElem.head, seqElem)
       else findNextValidPos(head._2 + 1, seqElem.tail)
@@ -183,60 +291,127 @@ object Highlighter {
   * Locate the next descriptor/synonym in the input text
     * @param curPos current position in the input text
     * @param text the input text
-    * @param size the length of the input text
-    * @param terms the graph of DeCS descriptors/synonyms
+    * @param endPos the last valid position of the input text
     * @return Some((final position of the descriptor, DeCS id) if some descriptor was found or None otherwise
     */
   private def findTerm(curPos: Int,
                        text: String,
-                       size: Int,
-                       terms: Map[Char, CharSeq]): Option[(Int, String)] = {
-    if (curPos >= text.length) None
-    else terms.get(text(curPos)).flatMap((cseq: CharSeq) => findTerm(curPos + 1, text, size, cseq))
+                       endPos: Int): Option[(Int, String)] = {
+    if (curPos >= endPos) None
+    else terms.get(text(curPos)).flatMap( findTerm(curPos + 1, text, endPos, _) )
   }
 
   /**
     * Locate the next descriptor/synonym in the input text
     * @param curPos current position in the input text
     * @param text the input text
-    * @param size the length of the input text
+    * @param endPos the last valid position of the input text
     * @param seq the current position in the graph of DeCS descriptors/synonyms
     * @return Some((final position of the descriptor, DeCS id) if some descriptor was found or None otherwise
     */
   private def findTerm(curPos: Int,
                        text: String,
-                       size: Int,
+                       endPos: Int,
                        seq: CharSeq): Option[(Int, String)] = {
-    if (curPos >= size) {
-      getTermEnd(curPos, text, size, seq)
-    } else {
-      val ch: Char = text(curPos)
-      //println(s"findTerm sub=${text.substring(curPos)} curPos=$curPos ch=$ch")
-      seq.other.find(cs => cs.ch.equals(ch)) match {
-        case Some(cseq: CharSeq) => findTerm(curPos + 1, text, size, cseq) orElse getTermEnd(curPos, text, size, seq)
-        case None => getTermEnd(curPos, text, size, seq)
+    if (curPos <= endPos) {
+      val terms: mutable.Buffer[(Int, String)] = seq.other.flatMap {
+        cs2: CharSeq =>
+          //val curChar = text(curPos)
+          if (text(curPos) == cs2.ch) {
+            val y = findTerm(curPos + 1, text, endPos, cs2) match {
+              case Some(term) => Some(term)
+              case None =>
+                if (cs2.other.exists(cs3 => cs3.ch == 0) &&
+                  ((curPos == endPos) || (!Tools.isLetterOrDigit(text(curPos + 1))))) {
+                  val x = Some((curPos, cs2.id.toString()))
+                  x
+                } else None
+            }
+            y
+          } else None
       }
+      terms.sortWith((x, y) => x._1 <= y._1).lastOption
+    } else None
+  }
+
+  /**
+    * Given a set of documents and a term's string, return one document that has the term and follow the given
+    * restrictions (show descriptor, show synonyms, only precod)
+    * @param term the term content (string)
+    * @param docs the input set of documents to be filtered
+    * @param conf the initial filter conditions
+    * @return the document chosen from the input set
+    */
+  private def getDesiredTerm(term: String,
+                             docs: Seq[Document],
+                             conf: Config): Option[Document] = {
+    if (docs.isEmpty) None
+    else {
+      val first: Document = docs.head
+      val publType: String = Option(first.get("publicationType")).getOrElse("").toLowerCase().trim
+      val pubt: Boolean = conf.pubType.isEmpty || publType.isEmpty || Character.toLowerCase(conf.pubType.get).equals(publType.head)
+      val prec: Boolean = !conf.onlyPreCod || "t".equals(first.get("preCod"))
+
+      if (pubt && prec) {
+        val docs1: Seq[Document] = conf.scanLang match {
+          case Some(lang) =>
+            val lang1 = lang.toLowerCase
+            lang1  match {
+              case "en" | "es" | "pt" | "fr" => docs.filter(doc => lang1.equals(doc.get("lang")))
+              case _ => docs
+            }
+          case None => docs
+        }
+        val termNorm: String = Tools.uniformString(term)
+        if (conf.scanDescriptors) {
+          docs1.find(doc => "descriptor".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))) match {
+            case Some(doc) =>
+              conf.outLang match {
+                case Some(outLang) =>
+                  val lang1 = outLang.toLowerCase
+                  lang1  match {
+                    case "en" | "es" | "pt" | "fr" => docs.find(doc => lang1.equals(doc.get("lang")))
+                    case _ => Some(doc)
+                  }
+                case None => Some(doc)
+              }
+            case None =>
+              if (conf.scanSynonyms) {
+                docs1.find(doc => "synonym".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))).flatMap {
+                  doc1 => conf.outLang match {
+                    case Some(outLang) => docs.find(doc => outLang.equals(doc.get("lang")))
+                    case None => Some(doc1)
+                  }
+                }
+              } else None
+          }
+        } else if (conf.scanSynonyms) {
+          docs1.find(doc =>"synonym".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))).flatMap {
+            doc1 => conf.outLang match {
+              case Some(outLang) => docs.find(doc => outLang.equals(doc.get("lang")))
+              case None => Some(doc1)
+            }
+          }
+        } else None
+      } else None
     }
   }
 
   /**
-  * Locate the position of the last character of the descriptor/synonym in the input text
-    * @param curPos current position in the input text
-    * @param text the input text
-    * @param size the length of the input text
-    * @param seq the current position in the graph of DeCS descriptors/synonyms
-    * @return Some((final position of the descriptor, DeCS id) if some descriptor was found or None otherwise
+    * Retrieve all documents that have the 'id' field content with the same value of the parameter 'id'
+    * @param id the value used to filter the documents
+    * @return the retrieved set of documents
     */
-  private def getTermEnd(curPos: Int,
-                         text: String,
-                         size: Int,
-                         seq: CharSeq): Option[(Int, String)] = {
-    val cond1 = curPos == size
-    lazy val cond2 = !Tools.isLetterOrDigit(text(curPos))
-    lazy val cond3 = seq.other.exists(cs => cs.ch.equals(0.toChar))
-    val bool = (cond1 || cond2) && cond3
-
-    if (bool) Some((curPos - 1, seq.id.toString)) else None
+  private def openDocument(id: String): Seq[Document] = {
+    Try {
+      val scoreDocs = isearcher.search(new TermQuery(new Term("id", id)), 100).scoreDocs
+      scoreDocs.foldLeft(Seq[Document]()) {
+        case (seq, score) => seq :+ isearcher.doc(score.doc)
+      }
+    } match {
+      case Success(value) => value
+      case Failure(_) => Seq[Document]()
+    }
   }
 
   /**
@@ -343,7 +518,7 @@ object Highlighter {
     if (curPos < strLength) {
       if (tagPos.isEmpty) Seq((curPos, strLength - 1))
       else {
-        val head = tagPos.head
+        val head: (Int, Int) = tagPos.head
         if (curPos < tagPos.head._1) Seq((curPos, head._1 - 1)) ++ invertPos(tagPos.tail, head._2 + 1, strLength)
         else invertPos(tagPos.tail, head._2 + 1, strLength)
       }
@@ -357,14 +532,21 @@ object HighlighterApp extends App {
     System.err.println("usage: HighlighterApp")
     System.err.println("\t\t-inFile=<inFile>       - input file to be highlighted")
     System.err.println("\t\t-outFile=<outFile>     - the output file with the highlighted text")
-    System.err.println("\t\t-decs=<path>           - path to the Isis database with the DeCS")
+    System.err.println("\t\t-decs=<path>           - path to the Lucene DeCS index")
+
+    System.err.println("\t\t[-outLang=<lang>]      - language of DeCS descriptors/synonyms to be used in the output. If absent will present descriptors/synonyms as they are in the text")
+    System.err.println("\t\t[-scanLang=<lang>]     - language of DeCS descriptors/synonyms to be used (pt,en,es,fr). Default is to use all")
+    System.err.println("\t\t[-pubType=<type>]      - the publication type of the DeCS descriptors/synonyms to be used (h,q,t). Default is to use all")
     System.err.println("\t\t[-prefix=<prefix>]     - text to be placed before each descriptor/synonym")
     System.err.println("\t\t[-suffix=<suffix>]     - text to be placed after  each descriptor/synonym")
     System.err.println("\t\t[-encoding=<encoding>] - encoding of the input and output file")
+    System.err.println("\t\t[--scanDescriptors]    - scan for DeCS descriptors. Default is false")
+    System.err.println("\t\t[--scanSynonyms]       - scan for DeCS synonyms. Default is false")
+    System.err.println("\t\t[--onlyPreCod]         - will use only pre codified DeCS descriptors. Default is false")
     System.exit(1)
   }
 
-  if (args.length < 3) usage()
+  if (args.length < 4) usage()
 
   val parameters = args.foldLeft[Map[String,String]](Map()) {
     case (map,par) =>
@@ -376,16 +558,23 @@ object HighlighterApp extends App {
   val inFile = parameters("inFile")
   val outFile = parameters("outFile")
   val decs = parameters("decs")
+  val outLang = parameters.get("outLang")
+  val scanLang = parameters.get("scanLang")
+  val pubType = parameters.get("pubType").map(_.trim.toLowerCase.charAt(0))
   val prefix = parameters.getOrElse("prefix", "<em>")
   val suffix = parameters.getOrElse("suffix", "</em>")
   val encoding = parameters.getOrElse("encoding", "utf-8")
+  val scanDescriptors = parameters.contains("scanDescriptors")
+  val scanSynonyms = parameters.contains("scanSynonyms")
+  val onlyPreCod = parameters.contains("onlyPreCod")
 
-  val terms: Map[String,String] = Tools.decs2Set(decs)
-  val tree: Map[Char, CharSeq] = Highlighter.createTermTree(terms)
   val src: BufferedSource = Source.fromFile(inFile, encoding)
   val text: String = src.getLines().mkString("\n")
-  val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) =
-    Highlighter.highlight(prefix, suffix, text, tree)
+  src.close()
+  val conf: Config = Config(scanLang, outLang, pubType, scanDescriptors, scanSynonyms, onlyPreCod)
+  val highlighter: Highlighter = new Highlighter(decs)
+  val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) = highlighter.highlight(prefix, suffix,
+    text, conf)
 
   if (seq.isEmpty) println("No descriptors found.")
   else {
@@ -399,5 +588,6 @@ object HighlighterApp extends App {
     writer.write(marked)
     writer.close()
   }
-  src.close()
+
+  highlighter.close()
 }
