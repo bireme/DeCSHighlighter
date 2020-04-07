@@ -91,26 +91,30 @@ class HighlightServlet extends HttpServlet {
       }
       val scanDescriptors: Boolean = true
       val scanSynonyms: Boolean = Option(request.getParameter("scanSynonyms"))
-        .map(x => x.isEmpty || (x.toLowerCase.head == 't')).getOrElse(true)
+        .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val onlyPreCod: Boolean = Option(request.getParameter("onlyPreCod"))
-        .map(x => x.isEmpty || (x.toLowerCase.head == 't')).getOrElse(false)
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val conf: Config = Config(scanLang, outLang, pubType, scanDescriptors, scanSynonyms, onlyPreCod)
+
+      //println(s"onlyPreCod=${request.getParameter("onlyPreCod")}")
 
       val prefix = if ((prefix0 == null) || prefix0.isEmpty ) "<em>" else prefix0
       val suffix = if ((suffix0 == null) || suffix0.isEmpty ) "</em>" else suffix0
       val showText: Boolean = Option(request.getParameter("showText"))
-        .map(x => x.isEmpty || (x.toLowerCase.head == 't')).getOrElse(true)
+        .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val showPositions: Boolean = Option(request.getParameter("showPositions"))
-        .map(x => x.isEmpty || (x.toLowerCase.head == 't')).getOrElse(true)
+        .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val showDescriptors: Boolean = Option(request.getParameter("showDescriptors"))
-        .map(x => x.isEmpty || (x.toLowerCase.head == 't')).getOrElse(true)
+        .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
 
-      println(s"scanSynonyms=$scanSynonyms showText=$showText showPositions=$showPositions showDescriptors=$showDescriptors")
+      //println(s"scanSynonyms=$scanSynonyms showText=$showText showPositions=$showPositions showDescriptors=$showDescriptors conf=$conf")
 
       // Highlight the input text
       val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) =
         highlighter.highlight(prefix, suffix, doc, conf)
       val result: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+
+      //println(s"marked=$marked set=$set")
 
       // Show all output (text, positions and descriptors) if the showText, showPositions and showDescriptors parameters
       // are absent.
@@ -127,6 +131,7 @@ class HighlightServlet extends HttpServlet {
         if (showDescriptors) result += "descriptors" -> JsArray(set.map(d => JsString(d)))
       }
       response.setContentType("application/json")
+      response.setCharacterEncoding("utf-8")
 
       // Transform the json object into a String and print it
       val resultStr = Json.stringify(JsObject(result))
