@@ -114,7 +114,10 @@ class HighlightWebServlet extends HttpServlet {
     val h4 = if (conf.scanSynonyms) {
       h3.replace("<input type=\"checkbox\" id=\"scanSynonyms\" name=\"scanSynonyms\" value=\"scanSynonyms\">",
       "<input type=\"checkbox\" id=\"scanSynonyms\" name=\"scanSynonyms\" value=\"scanSynonyms\" checked>")
-    } else h3
+    } else {
+      h3.replace("<input type=\"checkbox\" id=\"scanSynonyms\" name=\"scanSynonyms\" value=\"scanSynonyms\" checked>",
+        "<input type=\"checkbox\" id=\"scanSynonyms\" name=\"scanSynonyms\" value=\"scanSynonyms\">")
+    }
     val h5 = if (conf.onlyPreCod) {
       h4.replace("<input type=\"checkbox\" id=\"onlyPreCod\" name=\"onlyPreCod\" value=\"onlyPreCod\">",
         "<input type=\"checkbox\" id=\"onlyPreCod\" name=\"onlyPreCod\" value=\"onlyPreCod\" checked>")
@@ -308,17 +311,17 @@ class HighlightWebServlet extends HttpServlet {
       |</select>
       |&nbsp;&nbsp;&nbsp;&nbsp;
       |
-      |<label for="pubType">Publication type:</label>
+      |<label for="pubType">Descriptor classes:</label>
       |
       |<select id="pubType">
       |  <option id="pubType" value="all">all</option>
-      |  <option id="pubType" value="h">h</option>
-      |  <option id="pubType" value="q">q</option>
-      |  <option id="pubType" value="t">t</option>
+      |  <option id="pubType" value="h">descriptor</option>
+      |  <option id="pubType" value="q">qualifier</option>
+      |  <option id="pubType" value="t">publication type</option>
       |</select>
       |&nbsp;&nbsp;&nbsp;&nbsp;
       |
-      |<input type="checkbox" id="scanSynonyms" name="scanSynonyms" value="scanSynonyms">
+      |<input type="checkbox" id="scanSynonyms" name="scanSynonyms" value="scanSynonyms" checked>
       |<label for="scanSynonyms">Scan synonyms</label>
       |&nbsp;&nbsp;&nbsp;&nbsp;
       |

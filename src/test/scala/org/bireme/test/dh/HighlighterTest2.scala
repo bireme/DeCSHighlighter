@@ -81,7 +81,7 @@ class HighlighterTest2 extends AnyFlatSpec {
     }
   }
 
-  it should "find 'deformidades' (PT) and 'matadouros' (PT) and translate both into 'mataderos' and 'anomalias congenitas'" in {
+  /*it should "find 'deformidades' (PT) and 'matadouros' (PT) and translate both into 'mataderos' and 'anomalias congenitas'" in {
     val conf: Config = Config(scanLang=Some("pt"), outLang=Some("es"), pubType=None,
       scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
     val str = "As deformidades causadas pelos matadouros são crueis!"
@@ -93,7 +93,7 @@ class HighlighterTest2 extends AnyFlatSpec {
       val seq3 = seq2.map(Tools.uniformString)
       terms.forall(seq3.contains)
     }
-  }
+  }*/
 
   it should "find 'deformidades' (PT) and 'matadouros' (PT)  but translate " +
     "only the last one into 'mataderos'" in {
@@ -155,5 +155,15 @@ class HighlighterTest2 extends AnyFlatSpec {
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
     assert (seq2.isEmpty)
+  }
+
+  it should "return return 'Musa' the descriptor insted of 'Banana' the synonym" in {
+    val conf: Config = Config(scanLang=Some("pt"), outLang=None, pubType=None,
+      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val str = "A banana está madura"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Musa"))
   }
 }

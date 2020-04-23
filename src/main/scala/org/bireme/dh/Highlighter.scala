@@ -42,6 +42,7 @@ case class Config(
 /**
   * Class to highlight all DeCS descriptors and synonyms of an input text
   *
+  * @param decsPath path to the DeCS' Lucene index
   * author: Heitor Barbieri
   * date: September - 2018
 */
@@ -351,48 +352,43 @@ class Highlighter(decsPath: String) {
       val publType: String = Option(first.get("publicationType")).getOrElse("").toLowerCase().trim
       val pubt: Boolean = conf.pubType.isEmpty || publType.isEmpty || Character.toLowerCase(conf.pubType.get).equals(publType.head)
       val prec: Boolean = !conf.onlyPreCod || "t".equals(first.get("preCod"))
+      val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(Set("en", "es", "pt", "fr").contains)
+      val outLang: Option[String] = conf.outLang.map(_.toLowerCase).filter(Set("en", "es", "pt", "fr").contains) orElse inLang
+      val termNorm: String = Tools.uniformString(term)
 
       if (pubt && prec) {
-        val docs1: Seq[Document] = conf.scanLang match {
-          case Some(lang) =>
-            val lang1 = lang.toLowerCase
-            lang1  match {
-              case "en" | "es" | "pt" | "fr" => docs.filter(doc => lang1.equals(doc.get("lang")))
-              case _ => docs
-            }
-          case None => docs
-        }
-        val termNorm: String = Tools.uniformString(term)
-        if (conf.scanDescriptors) {
-          docs1.find(doc => "descriptor".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))) match {
-            case Some(doc) =>
-              conf.outLang match {
-                case Some(outLang) =>
-                  val lang1 = outLang.toLowerCase
-                  lang1  match {
-                    case "en" | "es" | "pt" | "fr" => docs.find(doc => lang1.equals(doc.get("lang")))
-                    case _ => Some(doc)
-                  }
-                case None => Some(doc)
+        val scanDoc: Option[Document] = if (conf.scanDescriptors) {
+          val docs1: Seq[Document] = docs.filter(doc => termNorm.equals(doc.get("term_normalized")))
+          val docs2: Seq[Document] = docs1.filter(doc => "descriptor".equals(doc.get("termType")))
+
+          val x: Option[Document] = inLang match {
+            case Some(il) => docs2.find(doc => il.equals(doc.get("lang")))
+            case None => docs2.headOption
+          }
+          x.orElse {
+            if (conf.scanSynonyms) {
+              val docs3: Seq[Document] = docs1.filter(doc => "synonym".equals(doc.get("termType")))
+              inLang match {
+                case Some(il) => docs3.find(doc => il.equals(doc.get("lang")))
+                case None => docs1.headOption
               }
-            case None =>
-              if (conf.scanSynonyms) {
-                docs1.find(doc => "synonym".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))).flatMap {
-                  doc1 => conf.outLang match {
-                    case Some(outLang) => docs.find(doc => outLang.equals(doc.get("lang")))
-                    case None => Some(doc1)
-                  }
-                }
-              } else None
+            } else None
           }
         } else if (conf.scanSynonyms) {
-          docs1.find(doc =>"synonym".equals(doc.get("termType")) && termNorm.equals(doc.get("term_normalized"))).flatMap {
-            doc1 => conf.outLang match {
-              case Some(outLang) => docs.find(doc => outLang.equals(doc.get("lang")))
-              case None => Some(doc1)
-            }
-          }
+          val docs1: Seq[Document] = docs.filter(doc => termNorm.equals(doc.get("term_normalized")))
+          val docs3: Seq[Document] = docs1.filter(doc => "synonym".equals(doc.get("termType")))
+          inLang.flatMap(l => docs3.find(doc => l.equals(doc.get("lang"))))
         } else None
+
+        val y: Option[Document] = scanDoc.flatMap {
+          sd =>
+            val docs1: Seq[Document] = docs.filter(doc => "descriptor".equals(doc.get("termType")))
+            outLang match {
+              case Some(ol) => docs1.find(doc => ol.equals(doc.get("lang")))
+              case None => docs1.find(doc => sd.get("lang").equals(doc.get("lang")))
+            }
+        }
+        y
       } else None
     }
   }
