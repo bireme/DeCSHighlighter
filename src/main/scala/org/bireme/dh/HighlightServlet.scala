@@ -112,7 +112,7 @@ class HighlightServlet extends HttpServlet {
       // Highlight the input text
       val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =
         highlighter.highlight(prefix, suffix, doc, conf)
-      val result: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
+      val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
 
       //println(s"marked=$marked set=$set")
 
