@@ -10,10 +10,10 @@ package org.bireme.dh
 import java.io.PrintWriter
 
 import play.api.libs.json._
-
 import javax.servlet.ServletConfig
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
+import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 
 /**
@@ -121,13 +121,13 @@ class HighlightServlet extends HttpServlet {
       if (!showText && !showPositions && !showDescriptors) {
         result += "text" -> JsString(marked)
         result += "positions" -> JsArray(seq.map(
-          elem => JsObject(Map("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+          elem => JsObject(TreeMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
                                "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
         result += ("descriptors" -> JsArray(set.map(d => JsString(d))))
       } else {
         if (showText) result += "text" -> JsString(marked)
         if (showPositions) result += "positions" -> JsArray(seq.map(
-          elem => JsObject(Map("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+          elem => JsObject(TreeMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
                                "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
         if (showDescriptors) result += "descriptors" -> JsArray(set.map(d => JsString(d)))
       }
