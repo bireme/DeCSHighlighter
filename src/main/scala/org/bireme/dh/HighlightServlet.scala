@@ -110,7 +110,7 @@ class HighlightServlet extends HttpServlet {
       //println(s"scanSynonyms=$scanSynonyms showText=$showText showPositions=$showPositions showDescriptors=$showDescriptors conf=$conf")
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String)], set: Seq[String]) =
+      val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =
         highlighter.highlight(prefix, suffix, doc, conf)
       val result: mutable.Map[String, JsValue] = mutable.Map[String, JsValue]()
 
@@ -122,12 +122,13 @@ class HighlightServlet extends HttpServlet {
         result += "text" -> JsString(marked)
         result += "positions" -> JsArray(seq.map(
           elem => JsObject(Map("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
-                               "descriptor" -> JsString(elem._4)))))
+                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
         result += ("descriptors" -> JsArray(set.map(d => JsString(d))))
       } else {
         if (showText) result += "text" -> JsString(marked)
         if (showPositions) result += "positions" -> JsArray(seq.map(
-          elem => JsObject(Map("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3)))))
+          elem => JsObject(Map("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
         if (showDescriptors) result += "descriptors" -> JsArray(set.map(d => JsString(d)))
       }
       response.setContentType("application/json")
