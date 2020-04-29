@@ -65,8 +65,9 @@ class Highlighter(decsPath: String) {
     * @return a map of descriptor -> id
     */
   private def decs2Map(isearcher: IndexSearcher): Map[String,String] = {
-    // descriptors that should be avoided because:
-    //val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
+    // descriptors that should be avoided because are common words and have other meanings in other languages
+    //val stopwords = Set("la", "foram", "amp", "www")
+    val stopwords = Set("amp", "www")
     val map: mutable.Map[String, String] = mutable.Map[String,String]()
     val query: Query = new MatchAllDocsQuery()
 
@@ -75,7 +76,8 @@ class Highlighter(decsPath: String) {
         val id: String = doc.get("id")
         val term: String = doc.get("term_normalized")
 //println(s"id=$id term=$term")
-        map += (term -> id)
+        if (stopwords.contains(term)) map
+        else map += (term -> id)
     }
     map.toMap
   }
