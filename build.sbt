@@ -10,7 +10,7 @@ val servletApiVersion = "4.0.1" //"3.0.1"
 //val hairyfotrVersion = "0.1.17"
 val scalaTestVersion = "3.3.0-SNAP2" //"3.2.0-M2"
 val supersafeVersion = "1.1.7"
-val luceneVersion = "8.5.0" //"8.4.1"
+val luceneVersion = "8.5.1" //"8.5.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % playJsonVersion,

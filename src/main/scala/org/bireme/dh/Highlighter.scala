@@ -13,7 +13,7 @@ import java.nio.file.Path
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.search.{IndexSearcher, MatchAllDocsQuery, Query, ScoreDoc, TermQuery, TopDocs}
-import org.apache.lucene.store.FSDirectory
+import org.apache.lucene.store.{FSDirectory, MMapDirectory}
 
 import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
@@ -48,7 +48,8 @@ case class Config(
 */
 class Highlighter(decsPath: String) {
   val indexPath: Path = new File(decsPath).toPath
-  val directory: FSDirectory = FSDirectory.open(indexPath)
+  //val directory: FSDirectory = FSDirectory.open(indexPath)
+  val directory: FSDirectory = new MMapDirectory(indexPath)
   val ireader: DirectoryReader = DirectoryReader.open(directory)
   val isearcher: IndexSearcher = new IndexSearcher(ireader)
   val terms: Map[Char, CharSeq] = createTermTree(decs2Map(isearcher))
