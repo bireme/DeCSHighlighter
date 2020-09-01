@@ -9,38 +9,15 @@
         <!--param-value>decs/decs</param-value-->
     </context-param>
 
-    <context-param>
-        <description>Term prefix</description>
-        <param-name>PREFIX</param-name>
-        <param-value>&lt;span class="decs"&gt;</param-value>
-    </context-param>
-
-    <context-param>
-        <description>Term prefix</description>
-        <param-name>SUFFIX</param-name>
-        <param-value>&lt;/span&gt;</param-value>
-    </context-param>
-
     <servlet>
         <servlet-name>HighlightServlet</servlet-name>
         <servlet-class>org.bireme.dh.HighlightServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
-    <servlet>
-        <servlet-name>HighlightWebServlet</servlet-name>
-        <servlet-class>org.bireme.dh.HighlightWebServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-
     <servlet-mapping>
         <servlet-name>HighlightServlet</servlet-name>
         <url-pattern>/serv</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>HighlightWebServlet</servlet-name>
-        <url-pattern>/app</url-pattern>
     </servlet-mapping>
 
     <welcome-file-list>

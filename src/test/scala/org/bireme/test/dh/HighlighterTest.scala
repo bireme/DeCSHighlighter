@@ -12,7 +12,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class HighlighterTest extends AnyFlatSpec {
   val highlighter: Highlighter = new Highlighter("/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs")
-  val conf: Config = Config(None, None, None, scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+  val conf: Config = Config(None, None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+                            scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
 
   "The highlighter" should "find 'temefos' as descriptor" in {
     val str = "temefos"

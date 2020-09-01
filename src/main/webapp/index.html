@@ -17,7 +17,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
 
         <h2>Description:</h2>
 
-        <p>A web service to highlight (insert xml tags) all DeCS descriptors and synonynms that occur in an input text.</p>
+        <p>A web service to highlight (insert xml tags) all DeCS descriptors, qualifiers and entry terms () that occur in an input text.</p>
 
         <h2>Example:</h2>
         <p>Given an input text:</p>
@@ -34,15 +34,20 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>Parameter:</p>
         <p>&nbsp;&nbsp;<b>document=</b> the input text to be highlighted</p>
         <p>Optional parameters:</p>
-        <p>&nbsp;&nbsp;<b>scanLang=</b> the language to be used to find terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. Default value is scan in all languages.</p>
-        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptor/synonym. Default value is '&lt;em&gt;'.</p>
-        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptor/synonym. Default value is '&lt;/em&gt;'.</p>
-        <p>&nbsp;&nbsp;<b>outLang=</b> language used to output terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent the terms/synonyms will be returned in the same language as found in the text.</p>
-        <p>&nbsp;&nbsp;<b>pubType=</b> the publication type of the document. Valid values are: 'h', 'q' and 't'. If absent the document type will not be considered.</p>
+        <p>&nbsp;&nbsp;<b>scanLang=</b> the language to be used to find descriptors/qualifiers/entry terms. Valid values are: 'en', 'es', 'pt' and 'fr'. Default value is scan in all languages.</p>
+        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptors/qualifiers/entry terms. Default value is '&lt;em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptors/qualifiers/entry terms. Default value is '&lt;/em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>outLang=</b> language used to output terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent the descriptors/qualifiers/entry terms(synonyms) will be returned in the same language as found in the text.</p>
+        <!--p>&nbsp;&nbsp;<b>pubType=</b> the publication type of the document. Valid values are: 'h', 'q' and 't'. If absent the document type will not be considered.</p-->
+        <p>&nbsp;&nbsp;<b>scanMainHeadings=</b> indicate if the main heading terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>scanSynonyms=</b> indicate if the synonyms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanQualifiers=</b> indicate if the DeCS qualifiers terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanPublicationTypes=</b> indicate if the DeCS publication types should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanCheckTags=</b> indicate if the DeCS check tags (precodified terms) should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanGeographics=</b> indicate if the DeCS geographics terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>showText=</b> outputs the highligted text. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptor/synonym and the respective DeCS identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptor/synonym(s). Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptors/qualifiers/entry terms and the respective DeCS identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptors/qualifiers/entry terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>onlyPreCod=</b> indicate if the only precodified documents should be scanned. Valid values are: 't' or 'f'. Default value is 'f'.</p>
         <br/>
         <p>Example input:
@@ -69,10 +74,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>&nbsp;&nbsp;<b>positions</b> - shows the begin and the end positions for each descriptor/synonym in the input text, the DeCs indentifier, DeCS descriptor and the DeCS descriptor/synonym in the input text.</p>
         <p>&nbsp;&nbsp;<b>descriptors</b> - shows each descriptor found.</p>
 
-        <h2>Example application:</h2>
-        <p>A <a href="app">web application</a> that displays the highlighted input document.</p>
-        <br/>
-        <p><pre>
+        <pre>
 DeCSHighlighter © Pan American Health Organization, 2018.
 See License at: <a href="https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt">https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt</a>
         </pre></p>

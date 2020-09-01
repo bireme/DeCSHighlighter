@@ -70,7 +70,6 @@ class HighlightServlet extends HttpServlet {
       // Parse parameters
       val prefix0: String = request.getParameter("prefix")
       val suffix0: String = request.getParameter("suffix")
-
       val scanLang: Option[String] = Option(request.getParameter("scanLang")).flatMap {
         opt =>  opt match {
           case "en" | "es" | "pt" | "fr" => Some(opt)
@@ -83,21 +82,32 @@ class HighlightServlet extends HttpServlet {
           case _ => None
         }
       }
-      val pubType: Option[Char] = Option(request.getParameter("pubType")).map(_.trim.toLowerCase.charAt(0)).flatMap {
-        opt =>  opt match {
-          case 'h' | 'q' | 't' => Some(opt)
-          case _ => None
-        }
-      }
-      val scanDescriptors: Boolean = true
-      val scanSynonyms: Boolean = Option(request.getParameter("scanSynonyms"))
-        .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
+      val pubType: Char = Option(request.getParameter("pubType")).map(_.trim.toLowerCase.charAt(0)).getOrElse(0.toChar)
+      val scanMainHeadings: Boolean = Option(request.getParameter("scanMainHeadings"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 'h'))
+      val scanEntryTerms: Boolean = Option(request.getParameter("scanSynonyms"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
+      val scanQualifiers: Boolean = Option(request.getParameter("scanQualifiers"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 'q'))
+      val scanPublicationTypes: Boolean = Option(request.getParameter("scanPublicationTypes"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 't'))
+      val scanCheckTags: Boolean = Option(request.getParameter("scanCheckTags"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
+      val scanGeographics: Boolean = Option(request.getParameter("scanGeographics"))
+        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val onlyPreCod: Boolean = Option(request.getParameter("onlyPreCod"))
         .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
-      val conf: Config = Config(scanLang, outLang, pubType, scanDescriptors, scanSynonyms, onlyPreCod)
 
-      //println(s"onlyPreCod=${request.getParameter("onlyPreCod")}")
+      val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
 
+      if (scanSome && onlyPreCod) throw new IllegalArgumentException("too mach parameters selected")
+
+      val conf: Config = {
+        if (onlyPreCod) Config(scanLang, outLang, scanMainHeadings=false, scanEntryTerms, scanQualifiers=false,
+          scanPublicationTypes=false, scanCheckTags=true, scanGeographics=false)
+        else Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+          scanCheckTags, scanGeographics)
+      }
       val prefix = if ((prefix0 == null) || prefix0.isEmpty ) "<em>" else prefix0
       val suffix = if ((suffix0 == null) || suffix0.isEmpty ) "</em>" else suffix0
       val showText: Boolean = Option(request.getParameter("showText"))
@@ -106,8 +116,6 @@ class HighlightServlet extends HttpServlet {
         .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
       val showDescriptors: Boolean = Option(request.getParameter("showDescriptors"))
         .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
-
-      //println(s"scanSynonyms=$scanSynonyms showText=$showText showPositions=$showPositions showDescriptors=$showDescriptors conf=$conf")
 
       // Highlight the input text
       val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =

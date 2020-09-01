@@ -7,8 +7,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   val highlighter: Highlighter = new Highlighter("/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs")
 
   "The highlighter" should "find 'matadouros' (PT) as descriptor" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=None, pubType=None,
-                              scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "Os matadouros são crueis!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -17,8 +17,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) as descriptor" in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=None, pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("en"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -27,8 +27,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "not find 'abattoirs' (EN) as descriptor" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=None, pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -37,8 +37,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'matadouros' (PT) but not 'abattoirs' as descriptor" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=None, pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "Os matadouros e abattoirs são crueis!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -47,8 +47,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) as descriptor but translate it into 'mataderos'" in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=Some("es"), pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("en"), Some("es"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -57,8 +57,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) and 'matadouros' (PT) as descriptor but translate only the second into 'mataderos'" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=Some("es"), pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), Some("es"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "The abattoirs and matadouros are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -68,8 +68,8 @@ class HighlighterTest2 extends AnyFlatSpec {
 
   it should "find 'abattoirs' (EN) and 'matadouros' (PT) and 'abreviaturas como Assunto' (PT) as descriptor but translate " +
     "only the last two into 'mataderos' and 'abreviaturas como asunto'" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=Some("es"), pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), Some("es"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "The abattoirs and matadouros and Abreviaturas como Assunto are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -97,8 +97,8 @@ class HighlighterTest2 extends AnyFlatSpec {
 
   it should "find 'deformidades' (PT) and 'matadouros' (PT)  but translate " +
     "only the last one into 'mataderos'" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=Some("es"), pubType=None,
-      scanDescriptors=true, scanSynonyms=false, onlyPreCod=false)
+    val conf: Config = Config(Some("pt"), Some("es"), scanMainHeadings=true, scanEntryTerms=false, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "As deformidades causadas pelos matadouros são crueis!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -106,20 +106,21 @@ class HighlighterTest2 extends AnyFlatSpec {
     assert (Tools.uniformString(seq2.head).equals("mataderos"))
   }
 
-  it should "find 'deformidades' (PT) and 'matadouros' (PT)  but translate " +
-    "only the first one into 'anomalias congenitas'" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=Some("es"), pubType=None,
-      scanDescriptors=false, scanSynonyms=true, onlyPreCod=false)
+  it should "find 'deformidades' (PT) and 'matadouros' (PT)  but how it doesnt what main heading do not show nothing " in {
+    val conf: Config = Config(Some("pt"), Some("es"), scanMainHeadings=false, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "As deformidades causadas pelos matadouros são crueis!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("anomalias congenitas"))
+    assert (seq2.isEmpty)
   }
 
-  it should "find 'adulto' (PT) as descriptor. The document is precod." in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=Some("pt"), pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=true)
+  it should "find 'adulto' (PT) as check tag." in {
+    val conf: Config = Config(Some("en"), Some("pt"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
+    /*val conf: Config = Config(scanLang=Some("en"), outLang=Some("pt"), pubType=None,
+      scanDescriptors=true, scanSynonyms=true, onlyPreCod=true)*/
     val str = "The adult is cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -128,8 +129,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) as descriptor because the document type is 'H' lowercase" in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=None, pubType=Some('h'),
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("en"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -138,8 +139,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) as descriptor because the document type is 'H' uppercase" in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=None, pubType=Some('H'),
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("en"), outLang=None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -148,8 +149,8 @@ class HighlighterTest2 extends AnyFlatSpec {
   }
 
   it should "find 'abattoirs' (EN) as descriptor but do not return anything because the document type is 'H' uppercase" in {
-    val conf: Config = Config(scanLang=Some("en"), outLang=None, pubType=Some('T'),
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+    val conf: Config = Config(Some("en"), outLang=None, scanMainHeadings=false, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
     val str = "The abattoirs are cruel!"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
@@ -157,9 +158,9 @@ class HighlighterTest2 extends AnyFlatSpec {
     assert (seq2.isEmpty)
   }
 
-  it should "return return 'Musa' the descriptor insted of 'Banana' the synonym" in {
-    val conf: Config = Config(scanLang=Some("pt"), outLang=None, pubType=None,
-      scanDescriptors=true, scanSynonyms=true, onlyPreCod=false)
+  it should "return 'Musa' the descriptor instead of 'Banana' the synonym" in {
+    val conf: Config = Config(Some("pt"), outLang=None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
     val str = "A banana está madura"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)

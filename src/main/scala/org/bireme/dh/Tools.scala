@@ -177,7 +177,7 @@ object Tools {
   /**
     * @param in input string
     * @return a sequence of intervals (beginPos, endPos) of characters that are not other letters (characters that
-    *         are not usual letters (A-Z,a-z,0-9,accents,usual symbols), are for example characters of china, russian,
+    *         are not usual letters (A-Z,a-z,0-9,accents,usual symbols), are for example characters from china, russian,
     *         etc alphabet
     */
   private def getNoOtherLetter(in: String): Seq[(Int,Int)] =
@@ -241,39 +241,17 @@ object Tools {
       noOtherLetter.headOption match {
         case Some((begin, end)) =>
           if (curPos < begin) {
-            builder.append(text, curPos, begin)
+            val s1: String = text.substring(curPos, begin)
+            builder.append(s1)
             removeDiacriticals(text, begin, length, noOtherLetter, builder)
           } else {
-            val s1 = text.substring(curPos, end + 1)
+            val s1: String = text.substring(curPos, end + 1)
             val s2: String = Normalizer.normalize(s1, Form.NFD)
             val s3: String = s2.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
             builder.append(s3)
             removeDiacriticals(text, end + 1, length, noOtherLetter.tail, builder)
           }
         case None => builder.append(text, curPos)
-      }
-    }
-  }
-
-  private def removeDiacriticals0(text: String,
-                                 curPos: Int,
-                                 length: Int,
-                                 noOtherLetter: Seq[(Int,Int)]): String = {
-    if (curPos >= length) ""
-    else {
-      noOtherLetter.headOption match {
-        case Some(head) =>
-          val begin = head._1
-          if (curPos < begin) {
-            text.substring(curPos, begin) + removeDiacriticals(text, begin, length, noOtherLetter)
-          } else {
-            val end = head._2
-            val s1 = text.substring(curPos, end + 1)
-            val s2: String = Normalizer.normalize(s1, Form.NFD)
-            val s3: String = s2.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
-            s3 + removeDiacriticals(text, end + 1, length, noOtherLetter.tail)
-          }
-        case None => text.substring(curPos)
       }
     }
   }
