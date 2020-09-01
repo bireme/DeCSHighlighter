@@ -2,7 +2,7 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 val playJsonVersion = "2.8.1"
 val scalajVersion = "2.4.2" //"2.4.1"
@@ -47,3 +47,5 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
+
+test in assembly := {}

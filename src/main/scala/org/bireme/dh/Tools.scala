@@ -132,10 +132,18 @@ object Tools {
   def uniformString2(in: String): (String, Seq[Int]) = {
     require(in != null)
 
+    //val ct1 = CheckTime("1")
     val inlc: String = in.toLowerCase()
+    //ct1.mark()
+    //val ct2 = CheckTime("2")
     val noOL: Seq[(Int, Int)] = getNoOtherLetter(inlc)
+    //ct2.mark()
+    //val ct3 = CheckTime("3")
     val str: String = removeDiacriticals(inlc, 0, inlc.length, noOL)
+    //ct3.mark()
+    //val ct4 = CheckTime("4")
     val arr: Array[Int] = getOriginalStrPos(inlc, str)
+    //ct4.mark()
 
     (str, arr.toIndexedSeq)
   }
@@ -216,6 +224,38 @@ object Tools {
     * @return the input string with diacriticals removed
     */
   private def removeDiacriticals(text: String,
+                                 curPos: Int,
+                                 length: Int,
+                                 noOtherLetter: Seq[(Int,Int)]): String = {
+    removeDiacriticals(text, curPos, length, noOtherLetter, new StringBuilder()).toString()
+  }
+
+  @scala.annotation.tailrec
+  private def removeDiacriticals(text: String,
+                                 curPos: Int,
+                                 length: Int,
+                                 noOtherLetter: Seq[(Int,Int)],
+                                 builder: StringBuilder): StringBuilder = {
+    if (curPos >= length) builder
+    else {
+      noOtherLetter.headOption match {
+        case Some((begin, end)) =>
+          if (curPos < begin) {
+            builder.append(text, curPos, begin)
+            removeDiacriticals(text, begin, length, noOtherLetter, builder)
+          } else {
+            val s1 = text.substring(curPos, end + 1)
+            val s2: String = Normalizer.normalize(s1, Form.NFD)
+            val s3: String = s2.replaceAll("[\\p{InCombiningDiacriticalMarks}\\p{M}]", "")
+            builder.append(s3)
+            removeDiacriticals(text, end + 1, length, noOtherLetter.tail, builder)
+          }
+        case None => builder.append(text, curPos)
+      }
+    }
+  }
+
+  private def removeDiacriticals0(text: String,
                                  curPos: Int,
                                  length: Int,
                                  noOtherLetter: Seq[(Int,Int)]): String = {

@@ -53,6 +53,7 @@ class Highlighter(decsPath: String) {
   val ireader: DirectoryReader = DirectoryReader.open(directory)
   val isearcher: IndexSearcher = new IndexSearcher(ireader)
   val terms: Map[Char, CharSeq] = createTermTree(decs2Map(isearcher))
+  val langs = Set("en", "es", "pt", "fr")
 
   def close(): Unit = {
     ireader.close()
@@ -365,8 +366,8 @@ class Highlighter(decsPath: String) {
       val publType: String = Option(first.get("publicationType")).getOrElse("").toLowerCase().trim
       val pubt: Boolean = conf.pubType.isEmpty || publType.isEmpty || Character.toLowerCase(conf.pubType.get).equals(publType.head)
       val prec: Boolean = !conf.onlyPreCod || "t".equals(first.get("preCod"))
-      val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(Set("en", "es", "pt", "fr").contains)
-      val outLang: Option[String] = conf.outLang.map(_.toLowerCase).filter(Set("en", "es", "pt", "fr").contains) orElse inLang
+      val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(langs.contains)
+      val outLang: Option[String] = conf.outLang.map(_.toLowerCase).filter(langs.contains) orElse inLang
       val termNorm: String = Tools.uniformString(term)
 
       if (pubt && prec) {
@@ -433,7 +434,7 @@ class Highlighter(decsPath: String) {
                                  text: String,
                                  endPos: Int): Option[Int] = {
     if (curPos >= endPos) None
-    else (curPos to endPos).find(x => isValidTermStart(x, text, endPos))
+    else (curPos to endPos).find(isValidTermStart(_, text, endPos))
   }
 
   /**
