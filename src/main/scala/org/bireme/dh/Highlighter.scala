@@ -73,7 +73,7 @@ class Highlighter(decsPath: String) {
   private def decs2Map(isearcher: IndexSearcher): Map[String,String] = {
     // descriptors that should be avoided because are common words and have other meanings in other languages
     //val stopwords = Set("la", "foram", "amp", "www")
-    val stopwords = Set("amp", "www")
+    val stopwords = Set("amp", "www", "ano")
     val map: mutable.Map[String, String] = mutable.Map[String,String]()
     val query: Query = new MatchAllDocsQuery()
 
@@ -196,6 +196,8 @@ class Highlighter(decsPath: String) {
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
     val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, text2.length, seqElem, conf)
+
+println(s"text=[$text] seqElem=$seqElem seq=$seq set=$set")
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -368,27 +370,25 @@ class Highlighter(decsPath: String) {
     else {
       val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(langs.contains)
       val termNorm: String = Tools.uniformString(term)
-      val inDoc: Option[Document] = docs.find(doc => doc.get("term_normalized").equals(termNorm) &&
-                                                      (inLang.isEmpty || doc.get("lang").equals(inLang.get)))
-      val inLang1: Option[String] = inLang match {
-        case Some(lang) => Some(lang)
-        case None => inDoc.map(_.get("lang"))
-      }
-      val outLang: Option[String] = conf.outLang.map(_.toLowerCase).filter(langs.contains) orElse inLang1
+      val inDocs: Seq[Document] = docs.filter(doc => doc.get("term_normalized").equals(termNorm) && (inLang.isEmpty || doc.get("lang").equals(inLang.get)))
 
-      if (inDoc.exists(doc => conf.scanEntryTerms || Option(doc.get("synonym")).isEmpty)) {
-        val docs2: Seq[Document] = docs.filter {
-          doc => outLang.isEmpty || outLang.get.equals(doc.get("lang"))
-        }
-        val outDoc: Option[Document] = {
-          (if (conf.scanMainHeadings) docs2.find(doc => doc.get("termType").equals("mainHeading")) else None) orElse
-          (if (conf.scanQualifiers) docs2.find(doc => doc.get("termType").equals("qualifier")) else None) orElse
-          (if (conf.scanPublicationTypes) docs2.find(doc => doc.get("termType").equals("pubType")) else None) orElse
-          (if (conf.scanCheckTags) docs2.find(doc => doc.get("termType").equals("checkTag")) else None) orElse
-          (if (conf.scanGeographics) docs2.find(doc => doc.get("termType").equals("geographic")) else None)
-        }
-        outDoc
-      } else None
+      inDocs.headOption.flatMap {
+        inDoc =>
+          val inLang1: String = inLang.getOrElse(inDoc.get("lang"))
+          val termType: String = inDoc.get("termType")
+          if ((conf.scanMainHeadings     && termType.equals("mainHeading")) ||
+              (conf.scanQualifiers       && termType.equals("qualifier")) ||
+              (conf.scanPublicationTypes && termType.equals("pubType")) ||
+              (conf.scanCheckTags        && termType.equals("checkTag")) ||
+              (conf.scanGeographics      && termType.equals("geographic"))) {
+
+            if (conf.scanEntryTerms || Option(inDoc.get("synonym")).isEmpty) {
+              val outLang: String = conf.outLang.map(_.toLowerCase).filter(langs.contains).getOrElse(inLang1)
+
+              docs.find(doc => doc.get("lang").equals(outLang) && Option(doc.get("synonym")).isEmpty)
+            } else None
+          } else None
+      }
     }
   }
 
@@ -529,21 +529,24 @@ object HighlighterApp extends App {
     System.err.println("\t\t-outFile=<outFile>       - the output file with the highlighted text")
     System.err.println("\t\t-decs=<path>             - path to the Lucene DeCS index")
     System.err.println()
-    System.err.println("\t\t[-scanLang=<lang>]       - language of DeCS descriptors/synonyms to be used (pt,en,es,fr). Default is to use all")
-    System.err.println("\t\t[-outLang=<lang>]        - language of DeCS descriptors/synonyms to be used in the output. If absent will present descriptors/synonyms as they are in the text")
-    System.err.println("\t\t[-prefix=<prefix>]       - text to be placed before each descriptor/synonym")
-    System.err.println("\t\t[-suffix=<suffix>]       - text to be placed after  each descriptor/synonym")
+    System.err.println("\t\t[-scanLang=<lang>]       - language of DeCS terms to be used (pt,en,es,fr). Default is to use all")
+    System.err.println("\t\t[-outLang=<lang>]        - language of DeCS terms to be used in the output. If absent will present terms as they are in the text")
+    System.err.println("\t\t[-prefix=<prefix>]       - text to be placed before each term")
+    System.err.println("\t\t[-suffix=<suffix>]       - text to be placed after each term")
     System.err.println("\t\t[-encoding=<encoding>]   - encoding of the input and output file")
-    System.err.println("\t\t[--scanMainHeadings|--scanDescriptors] - scan for DeCS main headings (descriptors). Default is false")
-    System.err.println("\t\t[--scanEntryTerms|--scanSynonyms]      - scan for DeCS entry terms (synonyms). Default is false")
-    System.err.println("\t\t[--scanQualifiers]       - scan for DeCS qualifiers terms. Default is false")
-    System.err.println("\t\t[--scanPublicationTypes] - scan for DeCS publication types. Default is false")
-    System.err.println("\t\t[--scanCheckTags]        - scan for DeCS check tags (precodified terms). Default is false")
-    System.err.println("\t\t[--scanGeographics]      - scan for DeCS geographics. Default is false")
+    System.err.println("\t\t[--scanMainHeadings      - scan for DeCS main headings (descriptors)")
+    System.err.println("\t\t[--scanEntryTerms        - scan for DeCS entry terms (synonyms)")
+    System.err.println("\t\t[--scanQualifiers]       - scan for DeCS qualifiers terms")
+    System.err.println("\t\t[--scanPublicationTypes] - scan for DeCS publication types")
+    System.err.println("\t\t[--scanCheckTags]        - scan for DeCS check tags (precodified terms)")
+    System.err.println("\t\t[--scanGeographics]      - scan for DeCS geographics")
     System.err.println()
-    System.err.println("\t\t[--onlyPreCod]           - will only scan check tags (pre codified) DeCS terms. Default is false")
-    System.err.println("\t\t[-pubType=(h|q|t)]       - the publication type of the DeCS descriptors/synonyms to be used.\n" +
-      "\t\t\t'h' equals to --scanMainHeadings, 'q' equals to --scanQualifiers and 't' equals to --scanPublicationTypes")
+    System.err.println("\t\t[-pubType=(h|q|t|c|g)]   - [DEPRECATED] alias to DeCS type + synonyms" +
+      "\n\t\t\t'h' equals to --scanMainHeadings and --scanEntryTerms" +
+      "\n\t\t\t'q' equals to --scanQualifiers and --scanEntryTerms" +
+      "\n\t\t\t't' equals to --scanPublicationTypes and --scanEntryTerms" +
+      "\n\t\t\t'c' equals to -scanCheckTags and --scanEntryTerms" +
+      "\n\t\t\t'g' equals to --scanGeographics  and --scanEntryTerms")
     System.exit(1)
   }
 
@@ -566,24 +569,18 @@ object HighlighterApp extends App {
   val encoding: String = parameters.getOrElse("encoding", "utf-8")
   val pubType: Char = parameters.getOrElse("pubType", " ").toLowerCase.charAt(0)
 
-  val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") ||
-    parameters.contains("scanDescriptors") || (pubType == 'h')
-  val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || parameters.contains("scanSynonyms")
+  val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") || (pubType == 'h')
+  val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || (pubType != ' ')
   val scanQualifiers: Boolean = parameters.contains("scanQualifiers") || (pubType == 'q')
   val scanPublicationTypes: Boolean = parameters.contains("scanPublicationTypes") || (pubType == 't')
-  val scanCheckTags: Boolean = parameters.contains("scanCheckTags")
-  val scanGeographics: Boolean = parameters.contains("scanGeographics")
-  val onlyPreCod: Boolean = parameters.contains("onlyPreCod")
+  val scanCheckTags: Boolean = parameters.contains("scanCheckTags") || (pubType == 'c')
+  val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
   val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
 
-  if (scanSome && onlyPreCod) throw new IllegalArgumentException("too mach parameters selected")
+  if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
 
-  val conf: Config = {
-    if (onlyPreCod) Config(scanLang, outLang, scanMainHeadings=false, scanEntryTerms, scanQualifiers=false,
-        scanPublicationTypes=false, scanCheckTags=true, scanGeographics=false)
-      else Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+  val conf: Config = Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
                   scanCheckTags, scanGeographics)
-  }
 
   val src: BufferedSource = Source.fromFile(inFile, encoding)
   val text: String = src.getLines().mkString("\n")

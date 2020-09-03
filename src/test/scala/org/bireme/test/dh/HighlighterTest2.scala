@@ -167,4 +167,78 @@ class HighlighterTest2 extends AnyFlatSpec {
     println(s"text=$text seq=$seq seq2=$seq2")
     assert (seq2.contains("Musa"))
   }
+
+  it should "return 'Femmes' the descriptor instead of 'Meninas' the synonym" in {
+    val conf: Config = Config(Some("pt"), outLang=Some("fr"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
+    val str = "As meninas no Brasil são lindas!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Femmes"))
+  }
+
+  it should "return 'Mulheres' the descriptor instead of 'Meninas' the synonym" in {
+    val conf: Config = Config(Some("pt"), outLang=Some("pt"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
+    val str = "As meninas no Brasil são lindas!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Mulheres"))
+  }
+
+  it should "return 'Mulheres' the descriptor instead of 'Meninas' the synonym (no language configuration)" in {
+    val conf: Config = Config(None, None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
+    val str = "As meninas no Brasil são lindas!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Mulheres"))
+  }
+
+  it should "not return 'Femmes' the descriptor instead of 'Meninas' the synonym because we do not want synonyms" in {
+    val conf: Config = Config(Some("pt"), outLang=Some("fr"), scanMainHeadings=true, scanEntryTerms=false, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
+    val str = "As meninas no Brasil são lindas!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.isEmpty)
+  }
+
+  it should "return 'Brésil' as geographic" in {
+    val conf: Config = Config(Some("pt"), outLang=Some("fr"), scanMainHeadings=true, scanEntryTerms=false, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=true)
+    val str = "As meninas no Brasil são lindas!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Brésil"))
+  }
+
+  it should "return 'Brasil' as geographic" in {
+    val conf: Config = Config(Some("fr"), outLang=Some("pt"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=true)
+    val str = "Les filles de la république fédérative du Brésil sont magnifiques!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (seq2.contains("Brasil"))
+  }
+
+  it should "return 'Mulheres' as descriptor and 'Brasil' as geographic" in {
+    val conf: Config = Config(Some("fr"), outLang=Some("pt"), scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=false,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=true)
+    val str = "La femme de la République fédérative du Brésil est magnifique!"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert {
+      val terms = Set("mulheres", "brasil")
+      val seq3 = seq2.map(Tools.uniformString)
+      terms.forall(seq3.contains)
+    }
+  }
 }

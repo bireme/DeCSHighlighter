@@ -83,31 +83,36 @@ class HighlightServlet extends HttpServlet {
         }
       }
       val pubType: Char = Option(request.getParameter("pubType")).map(_.trim.toLowerCase.charAt(0)).getOrElse(0.toChar)
-      val scanMainHeadings: Boolean = Option(request.getParameter("scanMainHeadings"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 'h'))
-      val scanEntryTerms: Boolean = Option(request.getParameter("scanSynonyms"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
-      val scanQualifiers: Boolean = Option(request.getParameter("scanQualifiers"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 'q'))
-      val scanPublicationTypes: Boolean = Option(request.getParameter("scanPublicationTypes"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't') || (pubType == 't'))
-      val scanCheckTags: Boolean = Option(request.getParameter("scanCheckTags"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
-      val scanGeographics: Boolean = Option(request.getParameter("scanGeographics"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
-      val onlyPreCod: Boolean = Option(request.getParameter("onlyPreCod"))
-        .exists(x => x.isEmpty || (x.toLowerCase.head == 't'))
-
-      val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
-
-      if (scanSome && onlyPreCod) throw new IllegalArgumentException("too mach parameters selected")
+      val scanMainHeadings: Boolean = (pubType == 'h') ||
+        Option(request.getParameter("scanMainHeadings")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
+      val scanEntryTerms: Boolean = (pubType != 0.toChar) ||
+        Option(request.getParameter("scanEntryTerms")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
+      val scanQualifiers: Boolean =  (pubType == 'q') ||
+        Option(request.getParameter("scanQualifiers")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
+      val scanPublicationTypes: Boolean = (pubType == 't') ||
+        Option(request.getParameter("scanPublicationTypes")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
+      val scanCheckTags: Boolean = (pubType == 'c') ||
+        Option(request.getParameter("scanCheckTags")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
+      val scanGeographics: Boolean = (pubType == 'g') ||
+        Option(request.getParameter("scanGeographics")).map {
+          opt => opt.isEmpty || (opt.toLowerCase.head == 't')
+        }.getOrElse(pubType == 0.toChar)
 
       val conf: Config = {
-        if (onlyPreCod) Config(scanLang, outLang, scanMainHeadings=false, scanEntryTerms, scanQualifiers=false,
-          scanPublicationTypes=false, scanCheckTags=true, scanGeographics=false)
-        else Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+        Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
           scanCheckTags, scanGeographics)
       }
+//println(s"config=$conf")
       val prefix = if ((prefix0 == null) || prefix0.isEmpty ) "<em>" else prefix0
       val suffix = if ((suffix0 == null) || suffix0.isEmpty ) "</em>" else suffix0
       val showText: Boolean = Option(request.getParameter("showText"))

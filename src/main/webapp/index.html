@@ -17,12 +17,12 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
 
         <h2>Description:</h2>
 
-        <p>A web service to highlight (insert xml tags) all DeCS descriptors, qualifiers and entry terms () that occur in an input text.</p>
+        <p>A web service to highlight (insert xml tags) all DeCS terms (descriptors, qualifiers, entry terms, check tags and geographics) that occur in an input text. For a detailed description of the types of DeCS terms, see <a href="https://www.nlm.nih.gov/mesh/intro_record_types.html">here</a>. </p>
 
         <h2>Example:</h2>
         <p>Given an input text:</p>
         <p>"Pharmacotherapy has a pivotal role in the management of endometriosis with long-term treatments balancing clinical efficacy (control of pain symptoms and prevention of recurrence of the disease after surgery) with an acceptable safety profile. Treatment choice is based on several factors including age and patient preference, reproductive plans, intensity of pain, severity of disease and incidence of adverse effects.Areas covered: The aim of this review is to provide the reader with a complete overview of drugs that are currently available or are under investigation for the treatment of endometriosis highlighting on-going clinical trials."</p>
-        <p>The output text could be like that:</p>
+        <p>The output text could be:</p>
         <p>"<font color='blue'>Pharmacotherapy</font> has a pivotal <font color='blue'>role</font> in the <font color='blue'>management</font> of <font color='blue'>endometriosis</font> with long-term <font color='blue'>treatments</font> balancing <font color='blue'>clinical efficacy</font> (<font color='blue'>control</font> of <font color='blue'>pain</font> <font color='blue'>symptoms</font> and <font color='blue'>prevention</font> of <font color='blue'>recurrence</font> of the <font color='blue'>disease</font> after <font color='blue'>surgery</font>) with an acceptable <font color='blue'>safety</font> profile. <font color='blue'>Treatment</font> choice is based on several factors including age and <font color='blue'>patient preference</font>, reproductive <font color='blue'>plans</font>, intensity of <font color='blue'>pain</font>, severity of <font color='blue'>disease</font> and <font color='blue'>incidence</font> of adverse effects.Areas covered: The aim of this <font color='blue'>review</font> is to provide the reader with a complete overview of <font color='blue'>drugs</font> that are currently available or are under investigation for the <font color='blue'>treatment</font> of <font color='blue'>endometriosis</font> highlighting on-going clinical trials."</p>
 
         <h2>The web service:</h2>
@@ -34,21 +34,20 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>Parameter:</p>
         <p>&nbsp;&nbsp;<b>document=</b> the input text to be highlighted</p>
         <p>Optional parameters:</p>
-        <p>&nbsp;&nbsp;<b>scanLang=</b> the language to be used to find descriptors/qualifiers/entry terms. Valid values are: 'en', 'es', 'pt' and 'fr'. Default value is scan in all languages.</p>
-        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found descriptors/qualifiers/entry terms. Default value is '&lt;em&gt;'.</p>
-        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found descriptors/qualifiers/entry terms. Default value is '&lt;/em&gt;'.</p>
-        <p>&nbsp;&nbsp;<b>outLang=</b> language used to output terms/synonyms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent the descriptors/qualifiers/entry terms(synonyms) will be returned in the same language as found in the text.</p>
+        <p>&nbsp;&nbsp;<b>scanLang=</b> the language to be used to find DeCS terms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent it will scan in all those languages.</p>
+        <p>&nbsp;&nbsp;<b>prefix=</b> the text prefix to be used before any found DeCS terms. Default value is '&lt;em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>suffix=</b> the text suffix to be used after any found DeCS terms. Default value is '&lt;/em&gt;'.</p>
+        <p>&nbsp;&nbsp;<b>outLang=</b> language used to output DeCS terms. Valid values are: 'en', 'es', 'pt' and 'fr'. If absent the terms will be returned in the same language as found in the text.</p>
         <!--p>&nbsp;&nbsp;<b>pubType=</b> the publication type of the document. Valid values are: 'h', 'q' and 't'. If absent the document type will not be considered.</p-->
         <p>&nbsp;&nbsp;<b>scanMainHeadings=</b> indicate if the main heading terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>scanSynonyms=</b> indicate if the synonyms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>scanQualifiers=</b> indicate if the DeCS qualifiers terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanEntryTerms=</b> indicate if the entry terms (synonyms) should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>scanQualifiers=</b> indicate if the DeCS qualifiers should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>scanPublicationTypes=</b> indicate if the DeCS publication types should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>scanCheckTags=</b> indicate if the DeCS check tags (precodified terms) should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>scanGeographics=</b> indicate if the DeCS geographics terms should be scanned. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>showText=</b> outputs the highligted text. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>showPositions=</b> outputs the begin and end positions of each descriptors/qualifiers/entry terms and the respective DeCS identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>showDescriptors=</b> outputs the list of found descriptors/qualifiers/entry terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
-        <p>&nbsp;&nbsp;<b>onlyPreCod=</b> indicate if the only precodified documents should be scanned. Valid values are: 't' or 'f'. Default value is 'f'.</p>
+        <p>&nbsp;&nbsp;<b>showText=</b> output the highligted text. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showPositions=</b> output the begin and end positions of each DeCS term and the respective identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showDescriptors=</b> output the list of found DeCS terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <br/>
         <p>Example input:
         <p>&nbsp;&nbsp;<i>http://&lt;host&gt;:&lt;port&gt;/serv?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
@@ -69,14 +68,15 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
               "malaria"
             ]
           }</pre></p>
-        <p>Where:</p>
-        <p>&nbsp;&nbsp;<b>text</b> - shows the highlighted input text.</p>
-        <p>&nbsp;&nbsp;<b>positions</b> - shows the begin and the end positions for each descriptor/synonym in the input text, the DeCs indentifier, DeCS descriptor and the DeCS descriptor/synonym in the input text.</p>
-        <p>&nbsp;&nbsp;<b>descriptors</b> - shows each descriptor found.</p>
+        <p>where:</p>
+        <p>&nbsp;&nbsp;<b>text</b> - show the highlighted input text.</p>
+        <p>&nbsp;&nbsp;<b>positions</b> - show the begin and the end positions for each DeCS term in the input text, the DeCs indentifier, the DeCS original term in the input text.</p>
+        <p>&nbsp;&nbsp;<b>descriptors</b> - show each term found.</p>
 
+        <br/>
         <pre>
 DeCSHighlighter © Pan American Health Organization, 2018.
 See License at: <a href="https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt">https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.txt</a>
-        </pre></p>
+        </pre>
     </body>
 </html>
