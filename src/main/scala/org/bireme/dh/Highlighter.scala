@@ -197,7 +197,7 @@ class Highlighter(decsPath: String) {
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
     val (seq: Seq[(Int, Int, String, String)], set: Set[String]) = highlight(0, text2, text2.length, seqElem, conf)
 
-println(s"text=[$text] seqElem=$seqElem seq=$seq set=$set")
+//println(s"text=[$text] seqElem=$seqElem seq=$seq set=$set")
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
@@ -370,7 +370,8 @@ println(s"text=[$text] seqElem=$seqElem seq=$seq set=$set")
     else {
       val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(langs.contains)
       val termNorm: String = Tools.uniformString(term)
-      val inDocs: Seq[Document] = docs.filter(doc => doc.get("term_normalized").equals(termNorm) && (inLang.isEmpty || doc.get("lang").equals(inLang.get)))
+      val inDocs: Seq[Document] = docs.filter(doc => doc.get("term_normalized").equals(termNorm) && (inLang.isEmpty ||
+        doc.get("lang").equals(inLang.get)))
 
       inDocs.headOption.flatMap {
         inDoc =>
