@@ -2,14 +2,14 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.13.3"
+scalaVersion := "2.13.4"
 
 val playJsonVersion = "2.9.1" //"2.9.0"
 val scalajVersion = "2.4.2" //"2.4.1"
 val servletApiVersion = "4.0.1" //"3.0.1"
 val scalaTestVersion = "3.3.0-SNAP2" //"3.2.0-M2"
 val supersafeVersion = "1.1.7"
-val luceneVersion = "8.6.2" //"8.5.1"
+val luceneVersion = "8.7.0" //"8.6.2"
 
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % playJsonVersion,
