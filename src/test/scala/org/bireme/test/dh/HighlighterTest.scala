@@ -12,7 +12,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class HighlighterTest extends AnyFlatSpec {
   val highlighter: Highlighter = new Highlighter("/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs")
-  val conf: Config = Config(None, None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+  val conf: Config = Config(scanLang=None, outLang=None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
                             scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
 
   "The highlighter" should "find 'temefos' as descriptor" in {
@@ -61,7 +61,7 @@ class HighlighterTest extends AnyFlatSpec {
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
     val seq3 = seq2.map(x => Tools.uniformString(x))
-    assert (seq3.contains("temefos") && seq3.contains("health") && seq3.contains("the"))
+    assert (seq3.contains("temefos") && seq3.contains("health"))
   }
 
   it should "find 'Abreviaturas como Assunto' as descriptor" in {
@@ -88,51 +88,51 @@ class HighlighterTest extends AnyFlatSpec {
     assert (!seq2.map(x => Tools.uniformString(x)).contains("abreviaturas como assunto"))
   }
 
-  it should "not mark 'ant' inside a tag but only outside" in {
-    val str = "<h1 xxx='ant is an animal'>my ant is small</h1>My ant is one year old"
+  it should "not mark 'ants' inside a tag but only outside" in {
+    val str = "<h1 xxx='ants are an animal'>my ants are small</h1>My ants are one year old"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("<h1 xxx='ant is an animal'>my <em>ant</em> is small</h1>My <em>ant</em> is one year old"))
+    assert(text.equals("<h1 xxx='ants are an animal'>my <em>ants</em> are small</h1>My <em>ants</em> are one year old"))
   }
 
   it should "not mark 'ant' inside a tag but only outside 2" in {
-    val str = "<h1 xxx='ant is an animal'/>My ant is one year old"
+    val str = "<h1 xxx='ants are an animal'/>My ants are one year old"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("<h1 xxx='ant is an animal'/>My <em>ant</em> is one year old"))
+    assert(text.equals("<h1 xxx='ants are an animal'/>My <em>ants</em> are one year old"))
   }
 
-  it should "should mark 'ant' outside a tag" in {
-    val str = "<h1>The ant is coming</h1>"
+  it should "should mark 'ants' outside a tag" in {
+    val str = "<h1>The ants are coming</h1>"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("<h1><em>The</em> <em>ant</em> is coming</h1>"))
+    assert(text.equals("<h1>The <em>ants</em> are coming</h1>"))
   }
 
-  it should "mark 'ant' tag" in {
-    val str = "The ant is coming"
+  it should "mark 'ants' tag" in {
+    val str = "The ants are coming"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("<em>The</em> <em>ant</em> is coming"))
+    assert(text.equals("The <em>ants</em> are coming"))
   }
 
-  it should "mark 'off pump coronary artery bypass' and 'graft' terms" in {
-    val str = "the ็off pump coronary artery bypass graft้ (OPCABG)"
+  it should "mark 'coronary artery bypass, off-pump' and 'grant' terms" in {
+    val str = "The ็coronary artery bypass, off-pump graft้ (OPCABG)"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("<em>the</em> <em>็off pump coronary artery bypass</em> <em>graft</em>้ (OPCABG)"))
+    assert(text.equals("The <em>็coronary artery bypass, off-pump</em> <em>graft</em>้ (OPCABG)"))
   }
 
-  it should "mark 'papers' and 'information' terms" in {
-    val str = "We researched papers published on ‘의료정보’ and ‘medical information’ in various Korean journals during a 10-year period from 2005 to 2015."
+  it should "mark 'paper' and 'information' terms" in {
+    val str = "We researched each paper published on ‘의료정보’ and ‘medical information’ in various Korean journals during a 10-year period from 2005 to 2015."
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert(text.equals("We researched <em>papers</em> published on ‘의료정보’ and ‘medical <em>information</em>’ in various Korean journals during a 10-year period from 2005 to 2015."))
+    assert(text.equals("We researched each <em>paper</em> published on ‘의료정보’ and ‘medical <em>information</em>’ in various Korean journals during a 10-year period from 2005 to 2015."))
   }
 }

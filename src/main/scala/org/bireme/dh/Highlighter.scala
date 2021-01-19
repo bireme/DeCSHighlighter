@@ -9,13 +9,11 @@ package org.bireme.dh
 
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 import java.nio.file.Path
-
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.search.{IndexSearcher, MatchAllDocsQuery, Query, ScoreDoc, TermQuery, TopDocs}
 import org.apache.lucene.store.{FSDirectory, MMapDirectory}
 
-import scala.collection.mutable
 import scala.io.{BufferedSource, Source}
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
@@ -56,7 +54,7 @@ class Highlighter(decsPath: String) {
   val directory: FSDirectory = new MMapDirectory(indexPath)
   val ireader: DirectoryReader = DirectoryReader.open(directory)
   val isearcher: IndexSearcher = new IndexSearcher(ireader)
-  val terms: Map[Char, CharSeq] = createTermTree(decs2Map(isearcher))
+  val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
   val langs = Set("en", "es", "pt", "fr")
 
   def close(): Unit = {
@@ -65,27 +63,23 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-    * Create a map of descriptors, qualifiers and synonyms of the DeCS
+    * Create a set of descriptors, qualifiers and synonyms of the DeCS
     *
     * @param isearcher Lucene search object
-    * @return a map of descriptor -> id
+    * @return a set of descriptor, qualifiers and synonyms
     */
-  private def decs2Map(isearcher: IndexSearcher): Map[String,String] = {
+  private def decs2Set(isearcher: IndexSearcher): Set[String] = {
     // descriptors that should be avoided because are common words and have other meanings in other languages
     //val stopwords = Set("la", "foram", "amp", "www")
-    val stopwords = Set("amp", "www", "ano")
-    val map: mutable.Map[String, String] = mutable.Map[String,String]()
+    val stopwords = Set("amp", "www", "ano", "la", "dos", "or", "the")
     val query: Query = new MatchAllDocsQuery()
 
-    getNextDoc(isearcher, query).foreach {
-      doc =>
-        val id: String = doc.get("id")
+    getNextDoc(isearcher, query).foldLeft(Set[String]()) {
+      case (set, doc) =>
         val term: String = doc.get("term_normalized")
-//println(s"id=$id term=$term")
-        if (stopwords.contains(term)) map
-        else map += (term -> id)
+        if (stopwords.contains(term)) set
+        else set + term
     }
-    map.toMap
   }
 
   /**
@@ -135,54 +129,51 @@ class Highlighter(decsPath: String) {
 
   /**
   * Given a list of DeCS terms/synonyms, create a graph with then where each letter of term is a node of the graph
-    * @param terms a map of descriptor -> DeCS id
+    * @param terms a set of descriptors
     * @return a map of initial letter of the descriptor -> a sequence of CharSeq
     */
-  private def createTermTree(terms: Map[String,String]): Map[Char, CharSeq] = {
+  private def createTermTree(terms: Set[String]): Map[Char, CharSeq] = {
     terms.foldLeft(Map[Char, CharSeq]()) {
       case(map, term) =>
-        val descr: String = term._1
-        val id: String = term._2
-        val firstChar: Char = descr.head
+        val firstChar: Char = term.head
         map.get(firstChar) match {
           case Some(cseq) =>
-            insertTerm(cseq, descr.tail, id)
+            insertTerm(cseq, term.tail)
             map
           case None =>
             val first: CharSeq = CharSeq(firstChar)
-            insertTerm(first, descr.tail, id)
+            insertTerm(first, term.tail)
             map + (firstChar -> first)
         }
     }
   }
 
   /**
-  * Insert a new descriptor/synonym into the graph
+  * Insert a new descriptor, qualifier or synonym into the graph
  *
     * @param seq the current graph
-    * @param term the descriptor/synonym to be inserted
-    * @param id the DeCS id of the descriptor/synonym to be inserted
+    * @param term the descriptor, qualifier or synonym to be inserted
     */
   @scala.annotation.tailrec
   private def insertTerm(seq: CharSeq,
-                         term: String,
-                         id: String): Unit = {
+                         term: String): Unit = {
     if (term.isEmpty) {  // end of stream
-      seq.other += CharSeq(0)
-      seq.id.append(id)
+      seq.isLeaf = true
     } else {
-      seq.other.find(cs => cs.ch.equals(term.head)) match {
-        case Some(cseq) => insertTerm(cseq, term.tail, id)
+      val head: Char = term.head
+      seq.other.get(head) match {
+        case Some(cseq) =>
+          insertTerm(cseq, term.tail)
         case None =>
-          val cseq: CharSeq = CharSeq(term.head)
-          seq.other += cseq
-          insertTerm(cseq, term.tail, id)
+          val cseq: CharSeq = CharSeq(head)
+          seq.other.addOne(head, cseq)
+          insertTerm(cseq, term.tail)
       }
     }
   }
 
   /**
-  * Highlights all DeCS descriptors/synonyms of an input text
+  * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
     * @param prefix a prefix to be placed before a found descriptor/synonym
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
@@ -219,7 +210,7 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-    * Highlights all DeCS descriptors/synonyms of an input text
+    * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
     * @param presu a prefix/suffix function that marks (put tags) the descriptor/synonym
     * @param text the input text to be highlighted
     * @return (Seq(initial position, final position, DeCS id, descriptor, text descriptor), Set(descriptor))
@@ -252,7 +243,7 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-  * Highlights all DeCS descriptors/synonyms of an input text
+  * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
     * @param curPos current position inside input text
     * @param text input text (without accents)
     * @param length input text (without accents) length
@@ -269,11 +260,11 @@ class Highlighter(decsPath: String) {
         findValidTermStart(curPos2, text, range._2) match {
           case Some(curPos3) =>
             findTerm(curPos3, text, range._2) match {
-              case Some((endPos, id)) =>
-                val term: String = text.substring(curPos3, endPos + 1)
-                getDesiredTerm(term, openDocument(id), conf) match {
+              case Some((endPos, term)) =>
+                getDesiredTerm(term, conf) match {
                   case Some(doc) =>
                     val (seq, set) = highlight(endPos + 1, text, length, seqElem2, conf)
+                    val id: String = Option(doc.get("uniqueId")).getOrElse("")
                     val outTerm: String = Option(doc.get("term")).getOrElse("")
                     val ret1: (Seq[(Int, Int, String, String)], Set[String]) =
                       ((curPos3, endPos, id, outTerm) +: seq, set + outTerm)
@@ -309,68 +300,70 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-  * Locate the next descriptor/synonym in the input text
+  * Locate the next descriptor, qualifier or synonym in the input text
     * @param curPos current position in the input text
     * @param text the input text
     * @param endPos the last valid position of the input text
-    * @return Some((final position of the descriptor, DeCS id) if some descriptor was found or None otherwise
+    * @return Some(end term position, term) if some was found or None otherwise
     */
   private def findTerm(curPos: Int,
                        text: String,
                        endPos: Int): Option[(Int, String)] = {
     if (curPos >= endPos) None
-    else terms.get(text(curPos)).flatMap( findTerm(curPos + 1, text, endPos, _) )
+    else terms.get(text(curPos)).flatMap( findTerm(curPos + 1, text, curPos, endPos, _) )
   }
 
   /**
-    * Locate the next descriptor/synonym in the input text
+    * Locate the next descriptor, qualifier or synonym in the input text
+    *
     * @param curPos current position in the input text
     * @param text the input text
+    * @param begTermPos the initial term position
     * @param endPos the last valid position of the input text
     * @param seq the current position in the graph of DeCS descriptors/synonyms
-    * @return Some((final position of the descriptor, DeCS id) if some descriptor was found or None otherwise
+    * @return Some(end term position, term) if some was found or None otherwise
     */
   private def findTerm(curPos: Int,
                        text: String,
+                       begTermPos: Int,
                        endPos: Int,
                        seq: CharSeq): Option[(Int, String)] = {
     if (curPos <= endPos) {
-      val terms: mutable.Buffer[(Int, String)] = seq.other.flatMap {
-        cs2: CharSeq =>
-          //val curChar = text(curPos)
-          if (text(curPos) == cs2.ch) {
-            val y = findTerm(curPos + 1, text, endPos, cs2) match {
-              case Some(term) => Some(term)
-              case None =>
-                if (cs2.other.exists(cs3 => cs3.ch == 0) &&
-                  ((curPos == endPos) || (!Tools.isLetterOrDigit(text(curPos + 1))))) {
-                  val x = Some((curPos, cs2.id.toString()))
-                  x
-                } else None
+      val curChar = text(curPos)
+      seq.other.get(curChar) match {
+        case Some(cs2) =>
+          if (cs2.isLeaf) {
+            if (curPos == endPos)
+              Some(curPos, text.substring(begTermPos, curPos + 1))
+            else {
+              findTerm(curPos + 1, text, begTermPos, endPos, cs2).orElse {
+                if (Tools.isLetterOrDigit(text(curPos + 1))) None
+                else Some(curPos, text.substring(begTermPos, curPos + 1))
+              }
             }
-            y
-          } else None
+          } else findTerm(curPos + 1, text, begTermPos, endPos, cs2)
+        case None =>
+          None
       }
-      terms.sortWith((x, y) => x._1 <= y._1).lastOption
-    } else None
+    } else
+      None
   }
 
   /**
     * Given a set of documents and a term's string, return one document that has the term and follow the given
     * restrictions (show descriptor, show synonyms, only precod)
     * @param term the term content (string)
-    * @param docs the input set of documents to be filtered
     * @param conf the initial filter conditions
     * @return the document chosen from the input set
     */
   private def getDesiredTerm(term: String,
-                             docs: Seq[Document],
                              conf: Config): Option[Document] = {
+    val docs: Seq[Document] = getTermDocs(term)
+
     if (docs.isEmpty) None
     else {
       val inLang: Option[String] = conf.scanLang.map(_.toLowerCase).filter(langs.contains)
-      val termNorm: String = Tools.uniformString(term)
-      val inDocs: Seq[Document] = docs.filter(doc => doc.get("term_normalized").equals(termNorm) && (inLang.isEmpty ||
+      val inDocs: Seq[Document] = docs.filter(doc => doc.get("term_normalized").equals(term) && (inLang.isEmpty ||
         doc.get("lang").equals(inLang.get)))
 
       inDocs.headOption.flatMap {
@@ -394,13 +387,37 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-    * Retrieve all documents that have the 'id' field content with the same value of the parameter 'id'
+    * Given a term return all documents which have the term as term_normalized field in some language
+    * @param term input term
+    * @return all documents which have the term as term_normalized field in some language
+    */
+  private def getTermDocs(term: String): Seq[Document] = {
+    val docs1: Seq[Document] = openDocument("term_normalized", term)
+    if (docs1.isEmpty) Seq.empty
+    else {
+      val ids: Set[String] = docs1.foldLeft(Set[String]()) {
+        case (set,doc) =>
+          Option(doc.get("uniqueId")) match {
+            case Some(id) => set + id
+            case None => set
+          }
+      }
+      ids.foldLeft(Seq[Document]()) {
+        case (seq, id) => seq ++ openDocument("uniqueId", id)
+      }
+    }
+  }
+
+  /**
+    * Retrieve all documents that have the 'field' field content with the same value of the parameter 'id'
+    * @param field document field used to search the value 'id'
     * @param id the value used to filter the documents
     * @return the retrieved set of documents
     */
-  private def openDocument(id: String): Seq[Document] = {
+  private def openDocument(field: String,
+                           id: String): Seq[Document] = {
     Try {
-      val scoreDocs = isearcher.search(new TermQuery(new Term("id", id)), 100).scoreDocs
+      val scoreDocs = isearcher.search(new TermQuery(new Term(field, id)), 100).scoreDocs
       scoreDocs.foldLeft(Seq[Document]()) {
         case (seq, score) => seq :+ isearcher.doc(score.doc)
       }
@@ -414,7 +431,7 @@ class Highlighter(decsPath: String) {
     * @param curPos current position in the input text
     * @param text the input text
     * @param endPos last position of the input text
-    * @return the next valid position in the input text to start a descriptor/synonym or None otherwise
+    * @return the next valid position in the input text to start a descriptor, qualifier or synonym or None otherwise
     */
   private def findValidTermStart(curPos: Int,
                                  text: String,
@@ -427,7 +444,7 @@ class Highlighter(decsPath: String) {
     * @param curPos current position in the input text
     * @param text the input text
     * @param endPos last position of the input text
-    * @return the current position if it is a valid position in the input text to start a descriptor/synonym or None otherwise
+    * @return the current position if it is a valid position in the input text to start a descriptor, qualifier or synonym or None otherwise
     */
   private def isValidTermStart(curPos: Int,
                                text: String,

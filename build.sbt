@@ -2,7 +2,7 @@ name := "DeCSHighlighter"
 
 version := "0.1"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.4" //"2.13.0"
 
 val playJsonVersion = "2.9.1" //"2.9.0"
 val scalajVersion = "2.4.2" //"2.4.1"

@@ -207,8 +207,11 @@ object DeCS2Lucene extends App {
                        fldTag: Int): Seq[(String, String)] = {
     rec.getFieldList(fldTag).asScala.foldLeft(Seq[(String, String)]()) {
       case (seq, fld) =>
-        val content: String = fld.getContent
-        seq :+ (content, uniformString(content))
+        val content: String = fld.getContent.trim
+
+        // Remove qualifier character
+        val content1: String = if (content(0) == '/') content.substring(1) else content
+        seq :+ (content1, uniformString(content1))
     }
   }
 }

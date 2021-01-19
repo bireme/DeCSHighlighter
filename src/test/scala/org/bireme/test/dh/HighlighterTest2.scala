@@ -16,6 +16,16 @@ class HighlighterTest2 extends AnyFlatSpec {
     assert (Tools.uniformString(seq2.head).equals("matadouros"))
   }
 
+  it should "find 'etiologia' (PT) as qualifier" in {
+    val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
+    val str = "Devemos tudo ao estudo /etiologia"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (Tools.uniformString(seq2.head).equals("etiologia"))
+  }
+
   it should "find 'abattoirs' (EN) as descriptor" in {
     val conf: Config = Config(Some("en"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
       scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
@@ -240,5 +250,15 @@ class HighlighterTest2 extends AnyFlatSpec {
       val seq3 = seq2.map(Tools.uniformString)
       terms.forall(seq3.contains)
     }
+  }
+
+  it should "find 'análise' (PT) as qualifier but not 'matadouros'" in {
+    val conf: Config = Config(Some("pt"), Some("pt"), scanMainHeadings=false, scanEntryTerms=false, scanQualifiers=true,
+      scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
+    val str = "Os matadouros no Brasil precisam de uma análise precisa de seu uso."
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (Tools.uniformString(seq2.head).equals("analise"))
   }
 }

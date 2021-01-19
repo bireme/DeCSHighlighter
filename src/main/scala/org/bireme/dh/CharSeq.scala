@@ -14,14 +14,15 @@ import scala.collection.mutable
   *
   * @param ch the character to represent
   * @param other the next characters
-  * @param id the DeCS record identifier if the current positions represents a DeCS descriptor, otherwise an empty string
+  * @param isLeaf if true that char is the last character of a descriptor, qualifier or synonym
   *
   * author: Heitor Barbieri
   * date: September - 2018
   */
 case class CharSeq(ch: Char,
-                   other: mutable.Buffer[CharSeq],   // Changed from Set because Memory overflow error
-                   id: StringBuilder)
+                   var other: mutable.Map[Char, CharSeq],
+                   var isLeaf: Boolean)
+
 object CharSeq {
-  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.ListBuffer[CharSeq](), new mutable.StringBuilder(0))
+  def apply(ch: Char): CharSeq = new CharSeq(ch, mutable.Map(), isLeaf = false)
 }
