@@ -6,7 +6,8 @@ scalaVersion := "2.13.10"
 
 val playJsonVersion = "2.9.3" //"2.9.1"
 val scalajVersion = "2.4.2" //"2.4.1"
-val servletApiVersion = "4.0.1" //"3.0.1"
+//val servletApiVersion = "4.0.1" //"3.0.1"
+val jakartaServletApiVersion = "6.0.0"
 val scalaTestVersion = "3.3.0-SNAP3" //"3.2.0-M2"
 val supersafeVersion = "1.1.7"
 val luceneVersion = "9.4.2" //"8.7.0"
@@ -14,7 +15,8 @@ val luceneVersion = "9.4.2" //"8.7.0"
 libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % playJsonVersion,
   "org.scalaj" %% "scalaj-http" % scalajVersion,
-  "javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
+  //"javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
+  "jakarta.servlet" % "jakarta.servlet-api" % jakartaServletApiVersion % "provided",
   "org.apache.lucene" % "lucene-core" % luceneVersion,
   "org.apache.lucene" % "lucene-analyzers-common" % "8.11.2",
   "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion,

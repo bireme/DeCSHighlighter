@@ -7,11 +7,11 @@
 
 package org.bireme.dh
 
-import java.io.PrintWriter
+import jakarta.servlet.ServletConfig
+import jakarta.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
+import java.io.PrintWriter
 import play.api.libs.json._
-import javax.servlet.ServletConfig
-import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
 import scala.collection.immutable.ListMap
 import scala.collection.mutable

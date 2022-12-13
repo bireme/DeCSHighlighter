@@ -49,13 +49,13 @@ case class Config(
   * date: September - 2018
 */
 class Highlighter(decsPath: String) {
-  val indexPath: Path = new File(decsPath).toPath
-  //val directory: FSDirectory = FSDirectory.open(indexPath)
-  val directory: FSDirectory = new MMapDirectory(indexPath)
-  val ireader: DirectoryReader = DirectoryReader.open(directory)
-  val isearcher: IndexSearcher = new IndexSearcher(ireader)
-  val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
-  val langs = Set("en", "es", "pt", "fr")
+  private val indexPath: Path = new File(decsPath).toPath
+  //private val directory: FSDirectory = FSDirectory.open(indexPath)
+  private val directory: FSDirectory = new MMapDirectory(indexPath)
+  private val ireader: DirectoryReader = DirectoryReader.open(directory)
+  private val isearcher: IndexSearcher = new IndexSearcher(ireader)
+  private val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
+  private val langs = Set("en", "es", "pt", "fr")
 
   def close(): Unit = {
     ireader.close()
@@ -107,7 +107,7 @@ class Highlighter(decsPath: String) {
         curIndex2 match {
           case cur if cur < (total - 1) => (cur, topdocs)
           case cur if total == 0 => (cur, topdocs)
-          case _ => (0, loadTopDocs(isearcher, query, Some(topdocs.scoreDocs(total.toInt - 1))))
+          case _ => (0, loadTopDocs(isearcher, query, Some(topdocs.scoreDocs(total - 1))))
         }
       case None => (0, loadTopDocs(isearcher, query, None))
     }
@@ -577,34 +577,34 @@ object HighlighterApp extends App {
       else map + ((split(0).substring(1), split(1)))
   }
 
-  val inFile: String = parameters("inFile")
-  val outFile: String = parameters("outFile")
-  val decs: String = parameters("decs")
-  val scanLang: Option[String] = parameters.get("scanLang")
-  val outLang: Option[String] = parameters.get("outLang")
-  val prefix: String = parameters.getOrElse("prefix", "<em>")
-  val suffix: String = parameters.getOrElse("suffix", "</em>")
-  val encoding: String = parameters.getOrElse("encoding", "utf-8")
-  val pubType: Char = parameters.getOrElse("pubType", " ").toLowerCase.charAt(0)
+  private val inFile: String = parameters("inFile")
+  private val outFile: String = parameters("outFile")
+  private val decs: String = parameters("decs")
+  private val scanLang: Option[String] = parameters.get("scanLang")
+  private val outLang: Option[String] = parameters.get("outLang")
+  private val prefix: String = parameters.getOrElse("prefix", "<em>")
+  private val suffix: String = parameters.getOrElse("suffix", "</em>")
+  private val encoding: String = parameters.getOrElse("encoding", "utf-8")
+  private val pubType: Char = parameters.getOrElse("pubType", " ").toLowerCase.charAt(0)
 
-  val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") || (pubType == 'h')
-  val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || (pubType != ' ')
-  val scanQualifiers: Boolean = parameters.contains("scanQualifiers") || (pubType == 'q')
-  val scanPublicationTypes: Boolean = parameters.contains("scanPublicationTypes") || (pubType == 't')
-  val scanCheckTags: Boolean = parameters.contains("scanCheckTags") || (pubType == 'c')
-  val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
-  val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
+  private val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") || (pubType == 'h')
+  private val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || (pubType != ' ')
+  private val scanQualifiers: Boolean = parameters.contains("scanQualifiers") || (pubType == 'q')
+  private val scanPublicationTypes: Boolean = parameters.contains("scanPublicationTypes") || (pubType == 't')
+  private val scanCheckTags: Boolean = parameters.contains("scanCheckTags") || (pubType == 'c')
+  private val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
+  private val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
 
   if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
 
-  val conf: Config = Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+  private val conf: Config = Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
                   scanCheckTags, scanGeographics)
 
-  val src: BufferedSource = Source.fromFile(inFile, encoding)
-  val text: String = src.getLines().mkString("\n")
+  private val src: BufferedSource = Source.fromFile(inFile, encoding)
+  private val text: String = src.getLines().mkString("\n")
   src.close()
-  val highlighter: Highlighter = new Highlighter(decs)
-  val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =
+  private val highlighter: Highlighter = new Highlighter(decs)
+  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =
     highlighter.highlight(prefix, suffix, text, conf)
 
   if (seq.isEmpty) println("No descriptors found.")
