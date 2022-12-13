@@ -2,7 +2,6 @@ package org.bireme.dh
 
 import java.io.File
 import java.nio.file.Path
-
 import bruma.master.{Master, MasterFactory, Record}
 import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.document.{Document, Field, StringField}
