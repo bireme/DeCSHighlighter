@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
   //"javax.servlet" % "javax.servlet-api" % servletApiVersion % "provided",
   "jakarta.servlet" % "jakarta.servlet-api" % jakartaServletApiVersion % "provided",
   "org.apache.lucene" % "lucene-core" % luceneVersion,
-  "org.apache.lucene" % "lucene-analyzers-common" % "8.11.2",
+  "org.apache.lucene" % "lucene-analysis-common" % luceneVersion,
   "org.apache.lucene" % "lucene-backward-codecs" % luceneVersion,
   "org.scalactic" %% "scalactic" % scalaTestVersion,
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
