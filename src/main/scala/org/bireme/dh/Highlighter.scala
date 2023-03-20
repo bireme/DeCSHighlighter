@@ -114,9 +114,10 @@ class Highlighter(decsPath: String) {
 
     //if (topDocs.totalHits.value > 0) {
     if (topDocs.scoreDocs.length > 0) {
-      isearcher.doc(topDocs.scoreDocs(index).doc) #:: getNextDoc(isearcher, query, Some(topDocs), curIndex + 1)
+      isearcher.storedFields().document(topDocs.scoreDocs(index).doc) #:: getNextDoc(isearcher, query, Some(topDocs), curIndex + 1)
     } else LazyList.empty
   }
+
 
   private def loadTopDocs(isearcher: IndexSearcher,
                           query: Query,
@@ -419,7 +420,7 @@ class Highlighter(decsPath: String) {
     Try {
       val scoreDocs = isearcher.search(new TermQuery(new Term(field, id)), 100).scoreDocs
       scoreDocs.foldLeft(Seq[Document]()) {
-        case (seq, score) => seq :+ isearcher.doc(score.doc)
+        case (seq, score) => seq :+ isearcher.storedFields().document(score.doc)
       }
     } match {
       case Success(value) => value
@@ -604,7 +605,7 @@ object HighlighterApp extends App {
   private val text: String = src.getLines().mkString("\n")
   src.close()
   private val highlighter: Highlighter = new Highlighter(decs)
-  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[String]) =
+  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], _: Seq[String]) =
     highlighter.highlight(prefix, suffix, text, conf)
 
   if (seq.isEmpty) println("No descriptors found.")
