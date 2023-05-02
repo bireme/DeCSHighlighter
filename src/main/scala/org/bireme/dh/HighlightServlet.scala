@@ -9,6 +9,7 @@ package org.bireme.dh
 
 import jakarta.servlet.ServletConfig
 import jakarta.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.PrintWriter
 import play.api.libs.json._
@@ -23,7 +24,8 @@ import scala.collection.mutable
   * date: September - 2018
   */
 class HighlightServlet extends HttpServlet {
-  var highlighter: Highlighter = _
+  private var highlighter: Highlighter = _
+  private var logger: Option[Logger] = None
 
   /**
     * Do initial web app configuration
@@ -36,8 +38,16 @@ class HighlightServlet extends HttpServlet {
     if ((decsPath == null) || decsPath.isEmpty)
       throw new NullPointerException(s"DECS_PATH = $decsPath")
 
+    logger = Option(config.getServletContext.getInitParameter("SHOULD_LOG")) match {
+      case Some(shouldLog) =>
+        if (shouldLog.trim.toBoolean) Some(LoggerFactory.getLogger(classOf[HighlightServlet]))
+        else None
+      case None => None
+    }
+
     highlighter = new Highlighter(decsPath)
     println("HighlightServlet is listening ...")
+    if (logger.isDefined) println("Logging is activated.")
   }
 
   /**
@@ -127,7 +137,8 @@ class HighlightServlet extends HttpServlet {
         highlighter.highlight(prefix, suffix, doc, conf)
       val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
 
-      //println(s"marked=$marked set=$set")
+      // write the result in the log
+      logResult(logger, request, doc, set)
 
       // Show all output (text, positions and descriptors) if the showText, showPositions and showDescriptors parameters
       // are absent.
@@ -152,6 +163,26 @@ class HighlightServlet extends HttpServlet {
       val writer: PrintWriter = response.getWriter
       writer.write(resultStr)
       writer.close()
+    }
+  }
+
+  private def logResult(logger: Option[Logger],
+                        request: HttpServletRequest,
+                        document: String,
+                        descriptors: Seq[String]): Unit = {
+    logger.foreach {
+      logr =>
+        // https://stackoverflow.com/questions/29910074/how-to-get-client-ip-address-in-java-httpservletrequest
+        val ipAddress: String = Option(request.getHeader("X-FORWARDED-FOR")) match {
+          case Some(address) =>
+            if (address.contains(",")) address.split(",", 2)(0)
+            else address
+          case None => Option(request.getRemoteAddr).getOrElse("unknown")
+        }
+        val docLen: Int = document.length
+        val descr: String = descriptors.mkString(";")
+
+        logr.info(s" IP:$ipAddress  DocumentLen:$docLen  Found:${descriptors.size}  Descriptors:$descr")
     }
   }
 }

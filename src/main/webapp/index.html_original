@@ -27,8 +27,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
 
         <h2>The web service:</h2>
 
-        <p>Path: <i>https://api.bvsalud.org/decs/v2/highlighter/</i></p>
-        <p>Header: apikey:&lt;your apikey&gt;</p>
+        <p>Path: <i>http://&lt;host&gt;:&lt;port&gt;/serv</i></p>
         <p>Methods: <i>GET or POST</i></p>
         <p>Consume: <i>application/x-www-form-urlencoded</i></p>
         <p>Produce: <i>application/json</i></p>
@@ -51,7 +50,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>&nbsp;&nbsp;<b>showDescriptors=</b> output the list of found DeCS terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <br/>
         <p>Example input:
-        <p>&nbsp;&nbsp;<i>https://api.bvsalud.org/decs/v2/highlighter/?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
+        <p>&nbsp;&nbsp;<i>http://&lt;host&gt;:&lt;port&gt;/serv?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
         <p><i>Example output:</i></p>
         <p><pre>
           {
@@ -74,8 +73,6 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>&nbsp;&nbsp;<b>positions</b> - show the begin and the end positions for each DeCS term in the input text, the DeCs indentifier, the DeCS original term in the input text.</p>
         <p>&nbsp;&nbsp;<b>descriptors</b> - show each term found.</p>
 
-        <br/>
-        <p><font color='green'> &nbsp; &nbsp; &nbsp;If you want to use our API, please contact us at https://decs.bvsalud.org/en/contact-us/ to get your apikey code and include it in the header of your API calls.</font></p>
         <br/>
         <pre>
 DeCSHighlighter © Pan American Health Organization, 2018.

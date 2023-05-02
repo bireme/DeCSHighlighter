@@ -54,8 +54,9 @@ class Highlighter(decsPath: String) {
   private val directory: FSDirectory = new MMapDirectory(indexPath)
   private val ireader: DirectoryReader = DirectoryReader.open(directory)
   private val isearcher: IndexSearcher = new IndexSearcher(ireader)
-  private val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
   private val langs = Set("en", "es", "pt", "fr")
+
+  val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
 
   def close(): Unit = {
     ireader.close()
@@ -596,9 +597,10 @@ object HighlighterApp extends App {
   private val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
   private val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
 
-  if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
+  private val scanMainHeadings2: Boolean = if (scanSome) scanMainHeadings else true
+  //if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
 
-  private val conf: Config = Config(scanLang, outLang, scanMainHeadings, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+  private val conf: Config = Config(scanLang, outLang, scanMainHeadings2, scanEntryTerms, scanQualifiers, scanPublicationTypes,
                   scanCheckTags, scanGeographics)
 
   private val src: BufferedSource = Source.fromFile(inFile, encoding)

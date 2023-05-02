@@ -5,8 +5,14 @@
     <context-param>
         <description>DeCS database directory</description>
         <param-name>DECS_PATH</param-name>
-        <!--param-value>/home/javaapps/sbt-projects/DeCSHighlighter/decs/decs</param-value-->
+        <!-- diretório relativo a jetty-base-->
         <param-value>decs/decs</param-value>
+    </context-param>
+
+    <context-param>
+        <description>Boolean flag indicating if requests should be logged.</description>
+        <param-name>SHOULD_LOG</param-name>
+        <param-value>true</param-value>
     </context-param>
 
     <servlet>
