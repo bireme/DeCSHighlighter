@@ -1,0 +1,185 @@
+2023-03-22 12:04:35.075:INFO :oejs.Server:main: jetty-11.0.14; built: 2023-02-22T23:41:48.575Z; git: 4601fe8dd805ce75b69c64466c115a162586641b; jvm 11.0.18+10
+2023-03-22 12:04:35.105:INFO :oejdp.ScanningAppProvider:main: Deployment monitor [file:///home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/]
+2023-03-22 12:04:35.367:INFO :oejw.StandardDescriptorProcessor:main: NO JSP Support for /decshighlighter, did not find org.eclipse.jetty.jsp.JettyJspServlet
+2023-03-22 12:04:35.373:INFO :oejss.DefaultSessionIdManager:main: Session workerName=node0
+12:04:35,514 |-INFO in ch.qos.logback.classic.LoggerContext[default] - This is logback-classic version 1.4.6
+12:04:35,523 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+12:04:35,524 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [jar:file:/tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-13099589503345839318/webapp/WEB-INF/lib/decshighlighter_2.13-0.1.jar!/logback.xml]
+12:04:35,528 |-INFO in ch.qos.logback.core.joran.spi.ConfigurationWatchList@452e26d0 - URL [jar:file:/tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-13099589503345839318/webapp/WEB-INF/lib/decshighlighter_2.13-0.1.jar!/logback.xml] is not of type file
+12:04:35,574 |-WARN in ch.qos.logback.core.model.processor.AppenderModelHandler - Appender named [STDOUT] not referenced. Skipping further processing.
+12:04:35,574 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
+12:04:35,574 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+12:04:35,585 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@1185618138 - No compression will be used
+12:04:35,586 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@1185618138 - Will use the pattern logFile.%d{yyyy-MM-dd}.log for the active file
+12:04:35,588 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - The date pattern is 'yyyy-MM-dd' from file name pattern 'logFile.%d{yyyy-MM-dd}.log'.
+12:04:35,588 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - Roll-over at midnight.
+12:04:35,589 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - Setting initial period to 2023-03-22T15:00:33.868Z
+12:04:35,590 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+12:04:35,603 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: logs/DeCSHighlighter.log
+12:04:35,603 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [logs/DeCSHighlighter.log]
+12:04:35,604 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
+12:04:35,608 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
+12:04:35,609 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@790174f2 - End of configuration.
+12:04:35,609 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@42257bdd - Registering current configuration as safe fallback point
+
+2023-03-22 12:04:35.639:WARN :oejshC.decshighlighter_war:main: unavailable
+org.apache.lucene.index.IndexNotFoundException: no segments* file found in MMapDirectory@/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/decs/decs lockFactory=org.apache.lucene.store.NativeFSLockFactory@2102a4d5: files: []
+	at org.apache.lucene.index.SegmentInfos$FindSegmentsFile.run(SegmentInfos.java:804)
+	at org.apache.lucene.index.StandardDirectoryReader.open(StandardDirectoryReader.java:109)
+	at org.apache.lucene.index.StandardDirectoryReader.open(StandardDirectoryReader.java:67)
+	at org.apache.lucene.index.DirectoryReader.open(DirectoryReader.java:60)
+	at org.bireme.dh.Highlighter.<init>(Highlighter.scala:55)
+	at org.bireme.dh.HighlightServlet.init(HighlightServlet.scala:48)
+	at org.eclipse.jetty.servlet.ServletHolder$Wrapper.init(ServletHolder.java:1305)
+	at org.eclipse.jetty.servlet.ServletHolder.initServlet(ServletHolder.java:633)
+	at org.eclipse.jetty.servlet.ServletHolder.initialize(ServletHolder.java:415)
+	at org.eclipse.jetty.servlet.ServletHandler.lambda$initialize$2(ServletHandler.java:725)
+	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:485)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:312)
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at org.eclipse.jetty.servlet.ServletHandler.initialize(ServletHandler.java:749)
+	at org.eclipse.jetty.servlet.ServletContextHandler.startContext(ServletContextHandler.java:392)
+	at org.eclipse.jetty.webapp.WebAppContext.startContext(WebAppContext.java:1305)
+	at org.eclipse.jetty.server.handler.ContextHandler.doStart(ContextHandler.java:903)
+	at org.eclipse.jetty.servlet.ServletContextHandler.doStart(ServletContextHandler.java:306)
+	at org.eclipse.jetty.webapp.WebAppContext.doStart(WebAppContext.java:533)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.bindings.StandardStarter.processBinding(StandardStarter.java:40)
+	at org.eclipse.jetty.deploy.AppLifeCycle.runBindings(AppLifeCycle.java:183)
+	at org.eclipse.jetty.deploy.DeploymentManager.requestAppGoal(DeploymentManager.java:516)
+	at org.eclipse.jetty.deploy.DeploymentManager.addApp(DeploymentManager.java:151)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.fileAdded(ScanningAppProvider.java:186)
+	at org.eclipse.jetty.deploy.providers.WebAppProvider.fileAdded(WebAppProvider.java:456)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider$1.fileAdded(ScanningAppProvider.java:58)
+	at org.eclipse.jetty.util.Scanner$DiscreteListener.pathAdded(Scanner.java:282)
+	at org.eclipse.jetty.util.Scanner.reportAddition(Scanner.java:836)
+	at org.eclipse.jetty.util.Scanner.reportDifferences(Scanner.java:802)
+	at org.eclipse.jetty.util.Scanner.scan(Scanner.java:709)
+	at org.eclipse.jetty.util.Scanner.doStart(Scanner.java:597)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.doStart(ScanningAppProvider.java:158)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.DeploymentManager.startAppProvider(DeploymentManager.java:605)
+	at org.eclipse.jetty.deploy.DeploymentManager.doStart(DeploymentManager.java:246)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.server.Server.start(Server.java:470)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.server.handler.AbstractHandler.doStart(AbstractHandler.java:89)
+	at org.eclipse.jetty.server.Server.doStart(Server.java:415)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.xml.XmlConfiguration.lambda$main$4(XmlConfiguration.java:1880)
+	at java.base/java.security.AccessController.doPrivileged(Native Method)
+	at org.eclipse.jetty.xml.XmlConfiguration.main(XmlConfiguration.java:1818)
+2023-03-22 12:04:35.641:WARN :oejw.WebAppContext:main: Failed startup of context o.e.j.w.WebAppContext@17d919b6{DeCS Highlighter,/decshighlighter,file:///tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-13099589503345839318/webapp/,UNAVAILABLE}{/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/decshighlighter.war}
+jakarta.servlet.ServletException: HighlightServlet==org.bireme.dh.HighlightServlet@d3192f11{jsp=null,order=1,inst=true,async=false,src=DESCRIPTOR:file:///tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-13099589503345839318/webapp/WEB-INF/web.xml,STARTED}
+	at org.eclipse.jetty.servlet.ServletHolder.initServlet(ServletHolder.java:651)
+	at org.eclipse.jetty.servlet.ServletHolder.initialize(ServletHolder.java:415)
+	at org.eclipse.jetty.servlet.ServletHandler.lambda$initialize$2(ServletHandler.java:725)
+	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:485)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:312)
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at org.eclipse.jetty.servlet.ServletHandler.initialize(ServletHandler.java:749)
+	at org.eclipse.jetty.servlet.ServletContextHandler.startContext(ServletContextHandler.java:392)
+	at org.eclipse.jetty.webapp.WebAppContext.startContext(WebAppContext.java:1305)
+	at org.eclipse.jetty.server.handler.ContextHandler.doStart(ContextHandler.java:903)
+	at org.eclipse.jetty.servlet.ServletContextHandler.doStart(ServletContextHandler.java:306)
+	at org.eclipse.jetty.webapp.WebAppContext.doStart(WebAppContext.java:533)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.bindings.StandardStarter.processBinding(StandardStarter.java:40)
+	at org.eclipse.jetty.deploy.AppLifeCycle.runBindings(AppLifeCycle.java:183)
+	at org.eclipse.jetty.deploy.DeploymentManager.requestAppGoal(DeploymentManager.java:516)
+	at org.eclipse.jetty.deploy.DeploymentManager.addApp(DeploymentManager.java:151)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.fileAdded(ScanningAppProvider.java:186)
+	at org.eclipse.jetty.deploy.providers.WebAppProvider.fileAdded(WebAppProvider.java:456)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider$1.fileAdded(ScanningAppProvider.java:58)
+	at org.eclipse.jetty.util.Scanner$DiscreteListener.pathAdded(Scanner.java:282)
+	at org.eclipse.jetty.util.Scanner.reportAddition(Scanner.java:836)
+	at org.eclipse.jetty.util.Scanner.reportDifferences(Scanner.java:802)
+	at org.eclipse.jetty.util.Scanner.scan(Scanner.java:709)
+	at org.eclipse.jetty.util.Scanner.doStart(Scanner.java:597)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.doStart(ScanningAppProvider.java:158)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.DeploymentManager.startAppProvider(DeploymentManager.java:605)
+	at org.eclipse.jetty.deploy.DeploymentManager.doStart(DeploymentManager.java:246)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.server.Server.start(Server.java:470)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.server.handler.AbstractHandler.doStart(AbstractHandler.java:89)
+	at org.eclipse.jetty.server.Server.doStart(Server.java:415)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.xml.XmlConfiguration.lambda$main$4(XmlConfiguration.java:1880)
+	at java.base/java.security.AccessController.doPrivileged(Native Method)
+	at org.eclipse.jetty.xml.XmlConfiguration.main(XmlConfiguration.java:1818)
+Caused by: 
+org.apache.lucene.index.IndexNotFoundException: no segments* file found in MMapDirectory@/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/decs/decs lockFactory=org.apache.lucene.store.NativeFSLockFactory@2102a4d5: files: []
+	at org.apache.lucene.index.SegmentInfos$FindSegmentsFile.run(SegmentInfos.java:804)
+	at org.apache.lucene.index.StandardDirectoryReader.open(StandardDirectoryReader.java:109)
+	at org.apache.lucene.index.StandardDirectoryReader.open(StandardDirectoryReader.java:67)
+	at org.apache.lucene.index.DirectoryReader.open(DirectoryReader.java:60)
+	at org.bireme.dh.Highlighter.<init>(Highlighter.scala:55)
+	at org.bireme.dh.HighlightServlet.init(HighlightServlet.scala:48)
+	at org.eclipse.jetty.servlet.ServletHolder$Wrapper.init(ServletHolder.java:1305)
+	at org.eclipse.jetty.servlet.ServletHolder.initServlet(ServletHolder.java:633)
+	at org.eclipse.jetty.servlet.ServletHolder.initialize(ServletHolder.java:415)
+	at org.eclipse.jetty.servlet.ServletHandler.lambda$initialize$2(ServletHandler.java:725)
+	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:485)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:312)
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735)
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:658)
+	at org.eclipse.jetty.servlet.ServletHandler.initialize(ServletHandler.java:749)
+	at org.eclipse.jetty.servlet.ServletContextHandler.startContext(ServletContextHandler.java:392)
+	at org.eclipse.jetty.webapp.WebAppContext.startContext(WebAppContext.java:1305)
+	at org.eclipse.jetty.server.handler.ContextHandler.doStart(ContextHandler.java:903)
+	at org.eclipse.jetty.servlet.ServletContextHandler.doStart(ServletContextHandler.java:306)
+	at org.eclipse.jetty.webapp.WebAppContext.doStart(WebAppContext.java:533)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.bindings.StandardStarter.processBinding(StandardStarter.java:40)
+	at org.eclipse.jetty.deploy.AppLifeCycle.runBindings(AppLifeCycle.java:183)
+	at org.eclipse.jetty.deploy.DeploymentManager.requestAppGoal(DeploymentManager.java:516)
+	at org.eclipse.jetty.deploy.DeploymentManager.addApp(DeploymentManager.java:151)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.fileAdded(ScanningAppProvider.java:186)
+	at org.eclipse.jetty.deploy.providers.WebAppProvider.fileAdded(WebAppProvider.java:456)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider$1.fileAdded(ScanningAppProvider.java:58)
+	at org.eclipse.jetty.util.Scanner$DiscreteListener.pathAdded(Scanner.java:282)
+	at org.eclipse.jetty.util.Scanner.reportAddition(Scanner.java:836)
+	at org.eclipse.jetty.util.Scanner.reportDifferences(Scanner.java:802)
+	at org.eclipse.jetty.util.Scanner.scan(Scanner.java:709)
+	at org.eclipse.jetty.util.Scanner.doStart(Scanner.java:597)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.doStart(ScanningAppProvider.java:158)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.deploy.DeploymentManager.startAppProvider(DeploymentManager.java:605)
+	at org.eclipse.jetty.deploy.DeploymentManager.doStart(DeploymentManager.java:246)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:171)
+	at org.eclipse.jetty.server.Server.start(Server.java:470)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:121)
+	at org.eclipse.jetty.server.handler.AbstractHandler.doStart(AbstractHandler.java:89)
+	at org.eclipse.jetty.server.Server.doStart(Server.java:415)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:93)
+	at org.eclipse.jetty.xml.XmlConfiguration.lambda$main$4(XmlConfiguration.java:1880)
+	at java.base/java.security.AccessController.doPrivileged(Native Method)
+	at org.eclipse.jetty.xml.XmlConfiguration.main(XmlConfiguration.java:1818)
+2023-03-22 12:04:35.652:INFO :oejs.AbstractConnector:main: Started ServerConnector@5f9325a6{HTTP/1.1, (http/1.1)}{0.0.0.0:8080}
+2023-03-22 12:04:35.660:INFO :oejs.Server:main: Started Server@2ddc9a9f{STARTING}[11.0.14,sto=5000] @958ms
+2023-03-22 12:05:43.606:INFO :oejs.Server:JettyShutdownThread: Stopped Server@2ddc9a9f{STOPPING}[11.0.14,sto=5000]
+2023-03-22 12:05:43.606:INFO :oejs.Server:JettyShutdownThread: Shutdown Server@2ddc9a9f{STOPPING}[11.0.14,sto=5000]
+2023-03-22 12:05:43.608:INFO :oejs.AbstractConnector:JettyShutdownThread: Stopped ServerConnector@5f9325a6{HTTP/1.1, (http/1.1)}{0.0.0.0:8080}
+2023-03-22 12:05:43.612:INFO :oejsh.ContextHandler:JettyShutdownThread: Stopped o.e.j.w.WebAppContext@17d919b6{DeCS Highlighter,/decshighlighter,null,STOPPED}{/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/decshighlighter.war}

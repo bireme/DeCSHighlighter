@@ -1,0 +1,2 @@
+2023-03-22T12:00:33 INFO  org.bireme.dh.HighlightServlet -  IP:127.0.0.1  DocumentLen:367  Found:6  Descriptors:Análisis Multivariante;Probabilidad;Sensibilidad y Especificidad;Signaux;United Nations;diagnóstico
+2023-03-22T12:22:18 INFO  org.bireme.dh.HighlightServlet -  IP:127.0.0.1  DocumentLen:26  Found:1  Descriptors:Malária

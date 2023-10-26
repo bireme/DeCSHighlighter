@@ -1,0 +1,33 @@
+2023-03-22 12:00:05.658:INFO :oejs.Server:main: jetty-11.0.14; built: 2023-02-22T23:41:48.575Z; git: 4601fe8dd805ce75b69c64466c115a162586641b; jvm 11.0.18+10
+2023-03-22 12:00:05.682:INFO :oejdp.ScanningAppProvider:main: Deployment monitor [file:///home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/]
+2023-03-22 12:00:05.969:INFO :oejw.StandardDescriptorProcessor:main: NO JSP Support for /decshighlighter, did not find org.eclipse.jetty.jsp.JettyJspServlet
+2023-03-22 12:00:05.976:INFO :oejss.DefaultSessionIdManager:main: Session workerName=node0
+12:00:06,118 |-INFO in ch.qos.logback.classic.LoggerContext[default] - This is logback-classic version 1.4.6
+12:00:06,128 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+12:00:06,129 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.xml] at [jar:file:/tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-4284887057201561130/webapp/WEB-INF/lib/decshighlighter_2.13-0.1.jar!/logback.xml]
+12:00:06,133 |-INFO in ch.qos.logback.core.joran.spi.ConfigurationWatchList@3670f00 - URL [jar:file:/tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-4284887057201561130/webapp/WEB-INF/lib/decshighlighter_2.13-0.1.jar!/logback.xml] is not of type file
+12:00:06,175 |-WARN in ch.qos.logback.core.model.processor.AppenderModelHandler - Appender named [STDOUT] not referenced. Skipping further processing.
+12:00:06,175 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
+12:00:06,176 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+12:00:06,187 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@1160652496 - No compression will be used
+12:00:06,188 |-INFO in c.q.l.core.rolling.TimeBasedRollingPolicy@1160652496 - Will use the pattern logFile.%d{yyyy-MM-dd}.log for the active file
+12:00:06,191 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - The date pattern is 'yyyy-MM-dd' from file name pattern 'logFile.%d{yyyy-MM-dd}.log'.
+12:00:06,191 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - Roll-over at midnight.
+12:00:06,191 |-INFO in c.q.l.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy - Setting initial period to 2023-03-22T15:00:06.191Z
+12:00:06,192 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+12:00:06,203 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: logs/DeCSHighlighter.log
+12:00:06,203 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [logs/DeCSHighlighter.log]
+12:00:06,204 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
+12:00:06,208 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
+12:00:06,209 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@46ab18da - End of configuration.
+12:00:06,209 |-INFO in ch.qos.logback.classic.joran.JoranConfigurator@790174f2 - Registering current configuration as safe fallback point
+
+HighlightServlet is listening ...
+Logging is activated.
+2023-03-22 12:00:16.810:INFO :oejsh.ContextHandler:main: Started o.e.j.w.WebAppContext@22f59fa{DeCS Highlighter,/decshighlighter,file:///tmp/jetty-0_0_0_0-8080-decshighlighter_war-_decshighlighter-any-4284887057201561130/webapp/,AVAILABLE}{/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/decshighlighter.war}
+2023-03-22 12:00:16.821:INFO :oejs.AbstractConnector:main: Started ServerConnector@49dbaaf3{HTTP/1.1, (http/1.1)}{0.0.0.0:8080}
+2023-03-22 12:00:16.823:INFO :oejs.Server:main: Started Server@1e6a3214{STARTING}[11.0.14,sto=5000] @11542ms
+2023-03-22 12:03:23.714:INFO :oejs.Server:JettyShutdownThread: Stopped Server@1e6a3214{STOPPING}[11.0.14,sto=5000]
+2023-03-22 12:03:23.714:INFO :oejs.Server:JettyShutdownThread: Shutdown Server@1e6a3214{STOPPING}[11.0.14,sto=5000]
+2023-03-22 12:03:23.717:INFO :oejs.AbstractConnector:JettyShutdownThread: Stopped ServerConnector@49dbaaf3{HTTP/1.1, (http/1.1)}{0.0.0.0:8080}
+2023-03-22 12:03:23.720:INFO :oejsh.ContextHandler:JettyShutdownThread: Stopped o.e.j.w.WebAppContext@22f59fa{DeCS Highlighter,/decshighlighter,null,STOPPED}{/home/javaapps/sbt-projects/DeCSHighlighter/jetty-base/webapps/decshighlighter.war}
