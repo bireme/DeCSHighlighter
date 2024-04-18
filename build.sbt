@@ -9,7 +9,7 @@ val scalajVersion = "2.4.2" //"2.4.1"
 val jakartaServletApiVersion = "6.0.0"
 val scalaTestVersion = "3.3.0-SNAP4" //"3.2.0-M2"
 val luceneVersion = "9.10.0" //"9.8.0" //"9.7.0"
-val logback = "1.5.5" //"1.4.11" //"1.4.8"
+val logback = "1.5.6" //"1.5.5"
 val logging = "3.9.5"
 
 libraryDependencies ++= Seq(
