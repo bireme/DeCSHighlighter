@@ -20,7 +20,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
      println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals(str))
+    assert (Tools.uniformString(seq2.head._1).equals(str))
   }
 
   it should "not mark 'ants' as a descriptor" in {
@@ -36,7 +36,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq, seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("ants"))
+    assert (Tools.uniformString(seq2.head._1).equals("ants"))
   }
 
   it should "find 'temefos' as descriptor - case 2" in {
@@ -44,7 +44,7 @@ class HighlighterTest extends AnyFlatSpec {
 
      val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
      println(s"text=$text seq=$seq seq2=$seq2")
-     assert (Tools.uniformString(seq2.head).equals("temefos"))
+     assert (Tools.uniformString(seq2.head._1).equals("temefos"))
    }
 
   it should "find 'temefos' as descriptor - case 3" in {
@@ -52,7 +52,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("temefos"))
+    assert (Tools.uniformString(seq2.head._1).equals("temefos"))
   }
 
   it should "find 'temefos' and 'health'" in {
@@ -60,7 +60,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    val seq3 = seq2.map(x => Tools.uniformString(x))
+    val seq3 = seq2.map(x => Tools.uniformString(x._1))
     assert (seq3.contains("temefos") && seq3.contains("health"))
   }
 
@@ -69,7 +69,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.map(x => Tools.uniformString(x)).contains("abreviaturas como assunto"))
+    assert (seq2.map(x => Tools.uniformString(x._1)).contains("abreviaturas como assunto"))
   }
 
   it should "find 'Abreviaturas como Assunto' as descriptor - case 2" in {
@@ -77,7 +77,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.map(x => Tools.uniformString(x)).contains("abreviaturas como assunto"))
+    assert (seq2.map(x => Tools.uniformString(x._1)).contains("abreviaturas como assunto"))
   }
 
   it should "not find 'Abreviaturas como Assunto' as descriptor" in {
@@ -85,7 +85,7 @@ class HighlighterTest extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (!seq2.map(x => Tools.uniformString(x)).contains("abreviaturas como assunto"))
+    assert (!seq2.map(x => Tools.uniformString(x._1)).contains("abreviaturas como assunto"))
   }
 
   it should "not mark 'ants' inside a tag but only outside" in {

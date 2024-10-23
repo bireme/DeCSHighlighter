@@ -208,9 +208,10 @@ object DeCS2Lucene extends App {
       case (seq, fld) =>
         val content: String = fld.getContent.trim
 
-        // Remove qualifier character
+        /* Remove qualifier character
         val content1: String = if (content(0) == '/') content.substring(1) else content
-        seq :+ (content1, uniformString(content1))
+         */
+        seq :+ (content, uniformString(content))
     }
   }
 }

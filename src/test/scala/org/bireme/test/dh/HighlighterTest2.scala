@@ -13,7 +13,8 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("matadouros"))
+
+    assert (Tools.uniformString(seq2.head._1).equals("matadouros"))
   }
 
   it should "find 'etiologia' (PT) as qualifier" in {
@@ -23,7 +24,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("etiologia"))
+    assert (Tools.uniformString(seq2.head._1).equals("etiologia"))
   }
 
   it should "find 'abattoirs' (EN) as descriptor" in {
@@ -33,7 +34,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("abattoirs"))
+    assert (Tools.uniformString(seq2.head._1).equals("abattoirs"))
   }
 
   it should "not find 'abattoirs' (EN) as descriptor" in {
@@ -53,7 +54,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("matadouros"))
+    assert (Tools.uniformString(seq2.head._1).equals("matadouros"))
   }
 
   it should "find 'abattoirs' (EN) as descriptor but translate it into 'mataderos'" in {
@@ -63,7 +64,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("mataderos"))
+    assert (Tools.uniformString(seq2.head._1).equals("mataderos"))
   }
 
   it should "find 'abattoirs' (EN) and 'matadouros' (PT) as descriptor but translate only the second into 'mataderos'" in {
@@ -73,7 +74,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("mataderos"))
+    assert (Tools.uniformString(seq2.head._1).equals("mataderos"))
   }
 
   it should "find 'abattoirs' (EN) and 'matadouros' (PT) and 'abreviaturas como Assunto' (PT) as descriptor but translate " +
@@ -86,7 +87,7 @@ class HighlighterTest2 extends AnyFlatSpec {
     println(s"text=$text seq=$seq seq2=$seq2")
     assert {
       val terms = Set("mataderos", "abreviaturas como asunto")
-      val seq3 = seq2.map(Tools.uniformString)
+      val seq3 = seq2.map(x => Tools.uniformString(x._1))
       terms.forall(seq3.contains)
     }
   }
@@ -113,7 +114,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("mataderos"))
+    assert (Tools.uniformString(seq2.head._1).equals("mataderos"))
   }
 
   it should "find 'deformidades' (PT) and 'matadouros' (PT)  but how it doesnt what main heading do not show nothing " in {
@@ -135,7 +136,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("adulto"))
+    assert (Tools.uniformString(seq2.head._1).equals("adulto"))
   }
 
   it should "find 'abattoirs' (EN) as descriptor because the document type is 'H' lowercase" in {
@@ -145,7 +146,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("abattoirs"))
+    assert (Tools.uniformString(seq2.head._1).equals("abattoirs"))
   }
 
   it should "find 'abattoirs' (EN) as descriptor because the document type is 'H' uppercase" in {
@@ -155,7 +156,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("abattoirs"))
+    assert (Tools.uniformString(seq2.head._1).equals("abattoirs"))
   }
 
   it should "find 'abattoirs' (EN) as descriptor but do not return anything because the document type is 'H' uppercase" in {
@@ -175,7 +176,9 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Musa"))
+    val seq3: Seq[String] = seq2.map(_._1)
+
+    assert (seq3.contains("Musa"))
   }
 
   it should "return 'Femmes' the descriptor instead of 'Meninas' the synonym" in {
@@ -225,7 +228,9 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Brésil"))
+    val seq3: Seq[String] = seq2.map(_._1)
+
+    assert (seq3.contains("Brésil"))
   }
 
   it should "return 'Brasil' as geographic" in {
@@ -247,7 +252,7 @@ class HighlighterTest2 extends AnyFlatSpec {
     println(s"text=$text seq=$seq seq2=$seq2")
     assert {
       val terms = Set("mulheres", "brasil")
-      val seq3 = seq2.map(Tools.uniformString)
+      val seq3 = seq2.map(x => Tools.uniformString(x._1))
       terms.forall(seq3.contains)
     }
   }
@@ -259,6 +264,6 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head).equals("analise"))
+    assert (Tools.uniformString(seq2.head._1).equals("analise"))
   }
 }

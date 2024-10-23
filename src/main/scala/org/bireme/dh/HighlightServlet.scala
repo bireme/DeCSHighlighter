@@ -133,7 +133,7 @@ class HighlightServlet extends HttpServlet {
         .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], set: Seq[String]) =
+      val (marked: String, seq: Seq[(Int, Int, String, String, String)], set: Seq[(String,Int)]) =
         highlighter.highlight(prefix, suffix, doc, conf)
       val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
 
@@ -145,17 +145,15 @@ class HighlightServlet extends HttpServlet {
       if (!showText && !showPositions && !showDescriptors) {
         result += "text" -> JsString(marked)
         result += "positions" -> JsArray(seq.map(
-          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2),
-            "decsId" -> JsString(elem._3), "id" -> JsString(elem._4), "descriptor" -> JsString(elem._5),
-            "original" -> JsString(elem._6)))))
-        result += ("descriptors" -> JsArray(set.map(d => JsString(d))))
+          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
+        result += ("descriptors" -> JsArray(set.map(d => JsString(d._1))))
       } else {
         if (showText) result += "text" -> JsString(marked)
         if (showPositions) result += "positions" -> JsArray(seq.map(
-          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2),
-            "decsId" -> JsString(elem._3), "id" -> JsString(elem._4), "descriptor" -> JsString(elem._5),
-            "original" -> JsString(elem._6)))))
-        if (showDescriptors) result += "descriptors" -> JsArray(set.map(d => JsString(d)))
+          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
+        if (showDescriptors) result += "descriptors" -> JsArray(set.map(d => JsString(d._1)))
       }
       response.setContentType("application/json")
       response.setCharacterEncoding("utf-8")
@@ -171,7 +169,7 @@ class HighlightServlet extends HttpServlet {
   private def logResult(logger: Option[Logger],
                         request: HttpServletRequest,
                         document: String,
-                        descriptors: Seq[String]): Unit = {
+                        descriptors: Seq[(String, Int)]): Unit = {
     logger.foreach {
       logr =>
         // https://stackoverflow.com/questions/29910074/how-to-get-client-ip-address-in-java-httpservletrequest
@@ -182,7 +180,7 @@ class HighlightServlet extends HttpServlet {
           case None => Option(request.getRemoteAddr).getOrElse("unknown")
         }
         val docLen: Int = document.length
-        val descr: String = descriptors.mkString(";")
+        val descr: String = descriptors.map(_._1).mkString(";")
 
         logr.info(s" IP:$ipAddress  DocumentLen:$docLen  Found:${descriptors.size}  Descriptors:$descr")
     }
