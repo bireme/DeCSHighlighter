@@ -220,7 +220,7 @@ class Highlighter(decsPath: String) {
         mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
     }
 
-    (marked2, seq2, map.toSeq.sortWith((kv1, kv2) => kv1._2 >= kv2._2))
+    (marked2, seq2, map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2))
   }
 
   /**
