@@ -49,6 +49,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>&nbsp;&nbsp;<b>showText=</b> output the highligted text. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>showPositions=</b> output the begin and end positions of each DeCS term and the respective identifier. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <p>&nbsp;&nbsp;<b>showDescriptors=</b> output the list of found DeCS terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
+        <p>&nbsp;&nbsp;<b>showScores=</b> output the score list of the found DeCS terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <br/>
         <p>Example input:
         <p>&nbsp;&nbsp;<i>https://api.bvsalud.org/decs/v2/highlighter/?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
@@ -67,15 +68,23 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
             ],
             "descriptors" : [
               "malaria"
+            ],
+            "scores" : [
+              {
+                "descriptor" : "malaria",
+                "quantity" : 1,
+                "score" : 1
+              }
             ]
           }</pre></p>
         <p>where:</p>
         <p>&nbsp;&nbsp;<b>text</b> - show the highlighted input text.</p>
-        <p>&nbsp;&nbsp;<b>positions</b> - show the begin and the end positions for each DeCS term in the input text, the DeCs indentifier, the DeCS original term in the input text.</p>
-        <p>&nbsp;&nbsp;<b>descriptors</b> - show each term found.</p>
+        <p>&nbsp;&nbsp;<b>positions</b> - show the begin and the end positions for each DeCS term in the input text, the DeCs identifier, the DeCS original term in the input text.</p>
+        <p>&nbsp;&nbsp;<b>descriptors</b> - show each found term.</p>
+        <p>&nbsp;&nbsp;<b>scores</b> - show the score of each found term.</p>
 
         <br/>
-        <p><font color='green'> &nbsp; &nbsp; &nbsp;If you want to use our API, please contact us at https://decs.bvsalud.org/en/contact-us/ to get your apikey code and include it in the header of your API calls.</font></p>
+        <p><span style="color: green;">If you want to use our API, please contact us at https://decs.bvsalud.org/en/contact-us/ to get your apikey code and include it in the header of your API calls.</span></p>
         <br/>
         <pre>
 DeCSHighlighter © Pan American Health Organization, 2018.

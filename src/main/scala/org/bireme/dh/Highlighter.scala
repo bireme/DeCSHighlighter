@@ -16,6 +16,7 @@ import org.apache.lucene.store.{FSDirectory, MMapDirectory}
 
 import scala.collection.immutable.HashMap
 import scala.io.{BufferedSource, Source}
+import scala.math.sqrt
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
@@ -187,12 +188,12 @@ class Highlighter(decsPath: String) {
     * @param prefix a prefix to be placed before a found descriptor/synonym
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
-    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity)))
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
     */
   def highlight(prefix: String,
                 suffix: String,
                 text: String,
-                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String,Int)]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
@@ -219,19 +220,21 @@ class Highlighter(decsPath: String) {
       case (mp, sq) =>
         mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
     }
+    val keyQtt: Seq[(String, Int)] = map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2)
+    val score: Seq[(String, Int, Double)] = calcScore(keyQtt)
 
-    (marked2, seq2, map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2))
+    (marked2, seq2, score)
   }
 
   /**
     * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
-    * @param presu a prefix/suffix function that marks (put tags) the descriptor/synonym
+    * @param presu a prefix/suffix function that given the string of each descriptor found, returns it marked.
     * @param text the input text to be highlighted
-    * @return (Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity)))
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
     */
   def highlight(presu: String => String,
                 text: String,
-                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String,Int)]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
@@ -256,8 +259,49 @@ class Highlighter(decsPath: String) {
       case (mp, sq) =>
         mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
     }
+    val keyQtt: Seq[(String, Int)] = map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2)
+    val score: Seq[(String, Int, Double)] = calcScore(keyQtt)
 
-    (marked2, seq2, map.toSeq.sortWith((kv1, kv2) => kv1._2 >= kv2._2))
+    (marked2, seq2, score)
+  }
+
+  /**
+    * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
+    * @param presu a prefix/suffix function that given the string of descriptor found, it's unique identifier, returns it marked.
+    * @param text the input text to be highlighted
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
+    */
+  def highlight(presu: (String, String) => String,
+                text: String,
+                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
+    val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
+    val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
+    val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
+    val seq: Seq[(Int, Int, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
+
+    // Adjust positions to the text with accents.
+    val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, uniqueId: String, _: String)) =>
+        val teBegin: Int = seqPos(termBegin)
+        val teEnd: Int = seqPos(termEnd)
+        val s = str + text.substring(lpos, teBegin) + presu(text.substring(teBegin, teEnd + 1), uniqueId)
+        (s, teEnd + 1)
+    }
+    val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
+    val seq2: Seq[(Int, Int, String, String, String)] = seq.map {
+      x =>
+        val spos1: Int = seqPos(x._1)
+        val spos2: Int = seqPos(x._2)
+        (spos1, spos2, x._3, x._4, text.substring(spos1, spos2 + 1))
+    }
+    val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
+      case (mp, sq) =>
+        mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
+    }
+    val keyQtt: Seq[(String, Int)] = map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2)
+    val score: Seq[(String, Int, Double)] = calcScore(keyQtt)
+
+    (marked2, seq2, score)
   }
 
   /**
@@ -567,6 +611,13 @@ class Highlighter(decsPath: String) {
       }
     } else Seq[(Int, Int)]()
   }
+
+  private def calcScore(keyQtt: Seq[(String, Int)]): Seq[(String, Int, Double)] = {
+    val freq: Double = sqrt(keyQtt.foldLeft(0) {
+      case (sum, (_,qtt)) => sum + (qtt * qtt)
+    })
+    keyQtt.map{ case (str, qtt) => (str, qtt, qtt/freq) }
+  }
 }
 
 object HighlighterApp extends App {
@@ -635,7 +686,7 @@ object HighlighterApp extends App {
   private val text: String = src.getLines().mkString("\n")
   src.close()
   private val highlighter: Highlighter = new Highlighter(decs)
-  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], freq: Seq[(String,Int)]) =
+  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], freq: Seq[(String,Int,Double)]) =
     highlighter.highlight(prefix, suffix, text, conf)
 
   if (seq.isEmpty) println("No descriptors found.")
@@ -644,7 +695,7 @@ object HighlighterApp extends App {
     seq.foreach(tuple => println(s"(${tuple._1},${tuple._2}) - ${tuple._4}"))
     println("\nMarked text:")
     println(marked)
-    println("\nFrequency:")
+    println("\nFrequency/Score:")
     freq.foreach(println)
     //println("Positions:")
     //seq.foreach(pos => println(pos))
