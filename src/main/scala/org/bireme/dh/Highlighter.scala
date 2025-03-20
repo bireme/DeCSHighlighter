@@ -218,7 +218,7 @@ class Highlighter(decsPath: String) {
     }
     val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
       case (mp, sq) =>
-        mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
+        mp + (sq._5 -> (mp.getOrElse(sq._5, 0) + 1))
     }
     val keyQtt: Seq[(String, Int)] = map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2)
     val score: Seq[(String, Int, Double)] = calcScore(keyQtt)
@@ -257,7 +257,7 @@ class Highlighter(decsPath: String) {
     }
     val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
       case (mp, sq) =>
-        mp + (sq._4 -> (mp.getOrElse(sq._4, 0) + 1))
+        mp + (sq._5 -> (mp.getOrElse(sq._5, 0) + 1))
     }
     val keyQtt: Seq[(String, Int)] = map.toSeq.sortWith((kv1, kv2) => kv1._2 > kv2._2)
     val score: Seq[(String, Int, Double)] = calcScore(keyQtt)

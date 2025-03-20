@@ -52,7 +52,7 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
         <p>&nbsp;&nbsp;<b>showScores=</b> output the score list of the found DeCS terms. Valid values are: 't' or 'f'. Default value is 't'.</p>
         <br/>
         <p>Example input:
-        <p>&nbsp;&nbsp;<i>https://api.bvsalud.org/decs/v2/highlighter/?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&document=the malaria desease kills.</i></p>
+        <p>&nbsp;&nbsp;<i>https://api.bvsalud.org/decs/v2/highlighter/?prefix=&lt;font color='blue'&gt;&suffix=&lt;/font&gt;&scanLang=en&outLang=en&document=the malaria desease kills.</i></p>
         <p><i>Example output:</i></p>
         <p><pre>
           {
@@ -61,17 +61,18 @@ See License at: https://github.com/bireme/DecsHighlighter/blob/master/LICENSE.tx
               {
                 "begin" : 4,
                 "end" : 10,
-                "id" : "008462",
-                "descriptor" : "malaria",
+                "id" : "d008288",
+                "decsId" : "008462",
+                "descriptor" : "Malaria",
                 "original" :  "malaria"
               }
             ],
             "descriptors" : [
-              "malaria"
+              "Malaria"
             ],
             "scores" : [
               {
-                "descriptor" : "malaria",
+                "descriptor" : "Malaria",
                 "quantity" : 1,
                 "score" : 1
               }
