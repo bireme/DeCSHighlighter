@@ -188,33 +188,33 @@ class Highlighter(decsPath: String) {
     * @param prefix a prefix to be placed before a found descriptor/synonym
     * @param suffix a suffix to be placed after a found descriptor/synonym
     * @param text the input text to be highlighted
-    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, mfnId, descriptor, text descriptor), Seq((descriptor, quantity, score)))
     */
   def highlight(prefix: String,
                 suffix: String,
                 text: String,
-                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String, String, String)], Seq[(String, Int, Double)]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
-    val seq: Seq[(Int, Int, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
+    val seq: Seq[(Int, Int, String, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
 
 //println(s"text=[$text] seqElem=$seqElem seq=$seq set=$set")
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
-      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String, _: String)) =>
         val teBegin: Int = seqPos(termBegin)
         val teEnd: Int = seqPos(termEnd)
         val s: String = str + text.substring(lpos, teBegin) + prefix + text.substring(teBegin, teEnd + 1) + suffix
         (s, teEnd + 1)
     }
     val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
-    val seq2: Seq[(Int, Int, String, String, String)] = seq.map {
+    val seq2: Seq[(Int, Int, String, String, String, String)] = seq.map {
       x =>
         val spos1: Int = seqPos(x._1)
         val spos2: Int = seqPos(x._2)
-        (spos1, spos2, x._3, x._4, text.substring(spos1, spos2 + 1))
+        (spos1, spos2, x._3, x._4, x._5, text.substring(spos1, spos2 + 1))
     }
     val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
       case (mp, sq) =>
@@ -230,30 +230,30 @@ class Highlighter(decsPath: String) {
     * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
     * @param presu a prefix/suffix function that given the string of each descriptor found, returns it marked.
     * @param text the input text to be highlighted
-    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, mfnId, descriptor, text descriptor), Seq((descriptor, quantity, score)))
     */
   def highlight(presu: String => String,
                 text: String,
-                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String, String, String)], Seq[(String, Int, Double)]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
-    val seq: Seq[(Int, Int, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
+    val seq: Seq[(Int, Int, String, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
-      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String)) =>
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, _: String, _: String, _: String)) =>
         val teBegin: Int = seqPos(termBegin)
         val teEnd: Int = seqPos(termEnd)
         val s = str + text.substring(lpos, teBegin) + presu(text.substring(teBegin, teEnd + 1))
         (s, teEnd + 1)
     }
     val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
-    val seq2: Seq[(Int, Int, String, String, String)] = seq.map {
+    val seq2: Seq[(Int, Int, String, String, String, String)] = seq.map {
       x =>
         val spos1: Int = seqPos(x._1)
         val spos2: Int = seqPos(x._2)
-        (spos1, spos2, x._3, x._4, text.substring(spos1, spos2 + 1))
+        (spos1, spos2, x._3, x._4, x._5, text.substring(spos1, spos2 + 1))
     }
     val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
       case (mp, sq) =>
@@ -269,30 +269,30 @@ class Highlighter(decsPath: String) {
     * Highlights all DeCS descriptors, qualifiers or synonyms of an input text
     * @param presu a prefix/suffix function that given the string of descriptor found, it's unique identifier, returns it marked.
     * @param text the input text to be highlighted
-    * @return (highlightedText, Seq(initial position, final position, DeCS id, descriptor, text descriptor), Seq((descriptor, quantity, score)))
+    * @return (highlightedText, Seq(initial position, final position, DeCS id, mfnId, descriptor, text descriptor), Seq((descriptor, quantity, score)))
     */
   def highlight(presu: (String, String) => String,
                 text: String,
-                conf: Config): (String, Seq[(Int, Int, String, String, String)], Seq[(String, Int, Double)]) = {
+                conf: Config): (String, Seq[(Int, Int, String, String, String, String)], Seq[(String, Int, Double)]) = {
     val (text2: String, seqPos: Seq[Int]) = Tools.uniformString2(text)
     val tags: Seq[(Int, Int)] = mergeTagsPos(findOpenTags(text2), findCloseTags(text2), findSelfCloseTags(text2))
     val seqElem: Seq[(Int, Int)] = invertPos(tags, 0, text2.length)
-    val seq: Seq[(Int, Int, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
+    val seq: Seq[(Int, Int, String, String, String)] = highlight(0, text2, text2.length, seqElem, conf)
 
     // Adjust positions to the text with accents.
     val (marked: String, tend: Int) = seq.foldLeft[(String, Int)]("", 0) {
-      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, uniqueId: String, _: String)) =>
+      case ((str: String, lpos: Int), (termBegin: Int, termEnd: Int, uniqueId: String, _:String, _: String)) =>
         val teBegin: Int = seqPos(termBegin)
         val teEnd: Int = seqPos(termEnd)
         val s = str + text.substring(lpos, teBegin) + presu(text.substring(teBegin, teEnd + 1), uniqueId)
         (s, teEnd + 1)
     }
     val marked2: String = if (tend >= text.length) marked else marked + text.substring(tend)
-    val seq2: Seq[(Int, Int, String, String, String)] = seq.map {
+    val seq2: Seq[(Int, Int, String, String, String, String)] = seq.map {
       x =>
         val spos1: Int = seqPos(x._1)
         val spos2: Int = seqPos(x._2)
-        (spos1, spos2, x._3, x._4, text.substring(spos1, spos2 + 1))
+        (spos1, spos2, x._3, x._4, x._5, text.substring(spos1, spos2 + 1))
     }
     val map: HashMap[String, Int] = seq2.foldLeft(HashMap[String,Int]()) {
       case (mp, sq) =>
@@ -310,13 +310,13 @@ class Highlighter(decsPath: String) {
     * @param text input text (without accents)
     * @param length input text (without accents) length
     * @param seqElem sequence of (begin,end) positions of xml tags
-    * @return Seq(initial position, final position, DeCS id, descriptor)
+    * @return Seq(initial position, final position, DeCS id, mfnId, descriptor)
     */
   private def highlight(curPos: Int,
                         text: String,
                         length: Int,
                         seqElem: Seq[(Int, Int)],
-                        conf: Config): Seq[(Int, Int, String, String)] = {
+                        conf: Config): Seq[(Int, Int, String, String, String)] = {
     findNextValidPos(curPos, seqElem) match {
       case Some((curPos2, range, seqElem2)) =>
         findValidTermStart(curPos2, text, range._2) match {
@@ -327,9 +327,10 @@ class Highlighter(decsPath: String) {
                   case Some(doc) =>
                     val seq = highlight(endPos + 1, text, length, seqElem2, conf)
                     val id: String = Option(doc.get("uniqueId")).getOrElse("")
+                    val mfnId: String = Option(doc.get("id")).getOrElse("")
                     val outTerm: String = Option(doc.get("term")).getOrElse("")
 
-                    (curPos3, endPos, id, outTerm) +: seq
+                    (curPos3, endPos, id, mfnId, outTerm) +: seq
                   case None => highlight(endPos + 1, text, length, seqElem2, conf)
                 }
               case None =>
@@ -337,7 +338,7 @@ class Highlighter(decsPath: String) {
             }
           case None => highlight(range._2 + 1, text, length, seqElem2, conf)
         }
-      case None => Seq[(Int, Int, String, String)]()
+      case None => Seq[(Int, Int, String, String, String)]()
     }
   }
 
@@ -686,13 +687,15 @@ object HighlighterApp extends App {
   private val text: String = src.getLines().mkString("\n")
   src.close()
   private val highlighter: Highlighter = new Highlighter(decs)
-  private val (marked: String, seq: Seq[(Int, Int, String, String, String)], freq: Seq[(String,Int,Double)]) =
+  private val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], freq: Seq[(String,Int,Double)]) =
     highlighter.highlight(prefix, suffix, text, conf)
 
   if (seq.isEmpty) println("No descriptors found.")
   else {
     println("Descriptors found:")
-    seq.foreach(tuple => println(s"(${tuple._1},${tuple._2}) - ${tuple._4}"))
+    seq.foreach{
+      tuple =>
+        println(s"(${tuple._1},${tuple._2}) - ${tuple._5}\tid=${tuple._3} mfn=${tuple._4}")}
     println("\nMarked text:")
     println(marked)
     println("\nFrequency/Score:")

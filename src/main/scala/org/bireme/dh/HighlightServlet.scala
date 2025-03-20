@@ -135,7 +135,7 @@ class HighlightServlet extends HttpServlet {
         .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String, String)], terms: Seq[(String,Int,Double)]) =
+      val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], terms: Seq[(String,Int,Double)]) =
         highlighter.highlight(prefix, suffix, doc, conf)
       val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
 
@@ -148,7 +148,7 @@ class HighlightServlet extends HttpServlet {
         result += "text" -> JsString(marked)
         result += "positions" -> JsArray(seq.map(
           elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
-                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
+            "decsId" -> JsString(elem._4),"descriptor" -> JsString(elem._6), "original" -> JsString(elem._6)))))
         result += ("descriptors" -> JsArray(terms.map(d => JsString(d._1))))
         result += "scores" -> JsArray(terms.map(
           elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
@@ -156,7 +156,7 @@ class HighlightServlet extends HttpServlet {
         if (showText) result += "text" -> JsString(marked)
         if (showPositions) result += "positions" -> JsArray(seq.map(
           elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
-                               "descriptor" -> JsString(elem._4), "original" -> JsString(elem._5)))))
+            "decsId" -> JsString(elem._4), "descriptor" -> JsString(elem._5), "original" -> JsString(elem._6)))))
         if (showDescriptors) result += "descriptors" -> JsArray(terms.map(d => JsString(d._1)))
         if (showScores) result += "scores" -> JsArray(terms.map(
           elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
