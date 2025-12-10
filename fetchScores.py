@@ -2,7 +2,8 @@ import requests
 import sys
 from typing import List, Dict
 
-BASE_URL = "http://localhost:9090"
+BASE_URL = "http://172.17.1.139:9090"
+#BASE_URL = "http://diamante15.bireme.br:9090"
 
 def fetch_scores(text: str) -> List[Dict[str, int | float]]:
     """
@@ -13,16 +14,22 @@ def fetch_scores(text: str) -> List[Dict[str, int | float]]:
     :return: Lista de dicionários com os campos "descriptor", "quantity" e "score".
     """
     url = f"{BASE_URL}/decshighlighter/serv"
-    print(url)
-    payload = {
+
+    parameters = {
         "showText": "f",
         "showPositions": "f",
         "showDescriptors": "f",
+        "showScores": "t",
         "document": text
     }
 
+    print("Parameters:")
+    for chave, valor in parameters.items():
+        print(f"\t{chave}: {valor}")
+    print()
+
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(url, data=parameters)
         response.raise_for_status()
         data = response.json()
 
@@ -54,9 +61,18 @@ def get_text_input(text_arg: str) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: python fetchScores.py <texto> ou python fetchScores.py file=<caminho_do_arquivo>")
+        print("Uso: python3 fetchScores.py <texto> ou python3 fetchScores.py file=<caminho_do_arquivo>")
         sys.exit(1)
 
     text_input = get_text_input(sys.argv[1])
     result = fetch_scores(text_input)
-    print(result)
+
+    print("\nResult:")
+    for item in result:
+       print(f"\tDescriptor: {item['descriptor']}")
+       print(f"\tQuantity: {item['quantity']}")
+       print(f"\tScore: {item['score']:.4f}")
+       print()
+
+    #print(result)
+

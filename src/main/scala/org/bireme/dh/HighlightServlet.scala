@@ -13,15 +13,20 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.PrintWriter
 import play.api.libs.json._
+import sttp.client4.httpclient.HttpClientSyncBackend
+import sttp.model.Uri
+import sttp.shared.Identity
 
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 /**
   * Servlet to highlight an input text.
   *
   * author: Heitor Barbieri
   * date: September - 2018
+  *
   */
 class HighlightServlet extends HttpServlet {
   private var highlighter: Highlighter = _
@@ -75,7 +80,7 @@ class HighlightServlet extends HttpServlet {
                              response: HttpServletResponse): Unit = {
     // Parse document parameter
     val doc = request.getParameter("document")
-    if ((doc == null) || doc.isEmpty ) response.sendError(400, "Missing document parameter")
+    if ((doc == null) || doc.isEmpty ) response.sendError(400, s"Missing document parameter. Parameters are: ${request.getParameterMap}")
     else {
       // Parse parameters
       val prefix0: String = request.getParameter("prefix")
@@ -135,40 +140,47 @@ class HighlightServlet extends HttpServlet {
         .forall(x => x.isEmpty || (x.toLowerCase.head == 't'))
 
       // Highlight the input text
-      val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], terms: Seq[(String,Int,Double)]) =
-        highlighter.highlight(prefix, suffix, doc, conf)
-      val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
+      Try (highlighter.highlight(prefix, suffix, doc, conf)) match {
+        case Success((marked: String, seq: Seq[(Int, Int, String, String, String, String)], terms: Seq[(String,Int,Double)])) =>
+          val result: mutable.Map[String, JsValue] = mutable.SeqMap[String, JsValue]()
 
-      // write the result in the log
-      logResult(logger, request, doc, terms)
+          // write the result in the log
+          logResult(logger, request, doc, terms)
 
-      // Show all output (text, positions and descriptors) if the showText, showPositions, showDescriptors and showScores parameters
-      // are absent.
-      if (!showText && !showPositions && !showDescriptors && !showScores) {
-        result += "text" -> JsString(marked)
-        result += "positions" -> JsArray(seq.map(
-          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
-            "decsId" -> JsString(elem._4),"descriptor" -> JsString(elem._6), "original" -> JsString(elem._6)))))
-        result += ("descriptors" -> JsArray(terms.map(d => JsString(d._1))))
-        result += "scores" -> JsArray(terms.map(
-          elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
-      } else {
-        if (showText) result += "text" -> JsString(marked)
-        if (showPositions) result += "positions" -> JsArray(seq.map(
-          elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
-            "decsId" -> JsString(elem._4), "descriptor" -> JsString(elem._5), "original" -> JsString(elem._6)))))
-        if (showDescriptors) result += "descriptors" -> JsArray(terms.map(d => JsString(d._1)))
-        if (showScores) result += "scores" -> JsArray(terms.map(
-          elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
+          // Show all output (text, positions and descriptors) if the showText, showPositions, showDescriptors and showScores parameters
+          // are absent.
+          if (!showText && !showPositions && !showDescriptors && !showScores) {
+            result += "text" -> JsString(marked)
+            result += "positions" -> JsArray(seq.map(
+              elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+                "decsId" -> JsString(elem._4),"descriptor" -> JsString(elem._6), "original" -> JsString(elem._6)))))
+            result += ("descriptors" -> JsArray(terms.map(d => JsString(d._1))))
+            result += "scores" -> JsArray(terms.map(
+              elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
+          } else {
+            if (showText) result += "text" -> JsString(marked)
+            if (showPositions) result += "positions" -> JsArray(seq.map(
+              elem => JsObject(ListMap("begin" -> JsNumber(elem._1), "end" -> JsNumber(elem._2), "id" -> JsString(elem._3),
+                "decsId" -> JsString(elem._4), "descriptor" -> JsString(elem._5), "original" -> JsString(elem._6)))))
+            if (showDescriptors) result += "descriptors" -> JsArray(terms.map(d => JsString(d._1)))
+            if (showScores) result += "scores" -> JsArray(terms.map(
+              elem => JsObject(ListMap("descriptor" -> JsString(elem._1), "quantity" -> JsNumber(elem._2), "score" -> JsNumber(elem._3)))))
+          }
+          response.setContentType("application/json")
+          response.setCharacterEncoding("utf-8")
+
+          // Transform the json object into a String and print it
+          val resultStr = Json.stringify(JsObject(result))
+          val writer: PrintWriter = response.getWriter
+          writer.write(resultStr)
+          writer.close()
+        case Failure(exception: Throwable) =>
+          val errMesg: String = exception match {
+            case _: java.lang.StackOverflowError => "Sorry, your text is too long!"
+            case _ => exception.getMessage
+          }
+          response.sendError(500, errMesg)
       }
-      response.setContentType("application/json")
-      response.setCharacterEncoding("utf-8")
-
-      // Transform the json object into a String and print it
-      val resultStr = Json.stringify(JsObject(result))
-      val writer: PrintWriter = response.getWriter
-      writer.write(resultStr)
-      writer.close()
     }
   }
 
@@ -191,4 +203,54 @@ class HighlightServlet extends HttpServlet {
         logr.info(s" IP:$ipAddress  DocumentLen:$docLen  Found:${descriptors.size}  Descriptors:$descr")
     }
   }
+}
+
+object HighlightServletTest extends App {
+  import sttp.client4._
+
+  private val uri: Uri = uri"http://172.17.1.139:9090/decshighlighter/serv"
+  private val text: String = """Diabesity
+                               |Metastasis is the growth of cancer cells in sites distant from the organ from which
+                               |they originated, and its occurrence indicates a poor prognosis. In the oral cavity
+                               |they are rare. They can occur in the soft tissues, jaws or both, and are of
+                               |significant clinical importance, as they indicate a disseminated stage of cancer,
+                               |and may be the only symptom of an underlying malignancy that has not yet been
+                               |diagnosed. Therefore, it is essential that the dental surgeon is familiar with the
+                               |clinical aspect and radiographic findings most associated with this pathology. The
+                               |aim of this narrative literature review is to compile the main aspects about oral
+                               |metastases for the clinician's work. The pathogenesis of metastases to the oral
+                               |cavity is complex and not fully understood. The most frequent primary sites are
+                               |breast cancer, for metastases in the jaw bones; and lung cancer, for deposits in
+                               |oral soft tissues. The most affected oral regions are the posterior area of the jaw
+                               |and the gingival tissue. Metastases in bone are more prevalent than in soft
+                               |tissues. In general, men are more affected, especially in the fifth to seventh
+                               |decade of life, and the clinical appearance of metastases is variable, resembling
+                               |inflammatory or hyperplastic lesions, but with rapid growth. Radiographic findings
+                               |are nonspecific and may present characteristics such as “moth-eaten” bone and
+                               |irregular increase in periodontal membrane spaces. This review concludes that it
+                               |is essential for the dentist to know and include metastatic lesions in the differential
+                               |diagnosis of oral pathologies, given their high degree of clinical relevance.
+                               |Keywords: Neoplasm Metastasis; Mouth Neoplasms; Pathology, Oral.""".stripMargin
+
+  private val text1: String = """Boletim epidemiológico que apresenta informações sobre os casos de HIV no estado de Goiás
+                               |e tem como objetivo descrever o perfil epidemiológico, tendências da infecção na população
+                               |adulta entre os anos 2020 a 2024 e fornecer subsídios para a tomada de decisão, medidas de
+                               |vigilância, prevenção e controle da infecção pelo HIV em sua quinta década de epidemia.
+                               |Trata-se de um estudo descritivo, a partir dos dados obtidos do Sistema de Informação de
+                               |Agravos de Notificação (SINAN) e Sistema de Informação de Mortalidade (SIM). Foram tabulados
+                               |os dados diagnosticados e notificados por HIV/Aids por município de residência""".stripMargin
+
+  private val request: Request[Either[String, String]] = basicRequest
+    .body(Map("showText" -> "f",
+              "showPositions" -> "f",
+              "showDescriptors" -> "f",
+              "showScores" -> "t",
+              "document" -> text1))
+    .post(uri)
+
+  private val backend: WebSocketSyncBackend = HttpClientSyncBackend()
+  private val response: Identity[Response[Either[String, String]]] = request.send(backend)
+
+  println(response.body)
+  println(response.headers)
 }
