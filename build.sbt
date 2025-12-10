@@ -33,7 +33,7 @@ trapExit := false
 
 resolvers += "Artima Maven Repository" at "https://repo.artima.com/releases"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-Ywarn-unused")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
 enablePlugins(JettyPlugin)
 //enablePlugins(TomcatPlugin)

@@ -621,7 +621,7 @@ class Highlighter(decsPath: String) {
   }
 }
 
-object HighlighterApp extends App {
+object HighlighterApp {
   private def usage(): Unit = {
     System.err.println("Application to highlights all DeCS descriptors and synonyms present in an input file.\n")
     System.err.println("usage: HighlighterApp")
@@ -650,62 +650,65 @@ object HighlighterApp extends App {
     System.exit(1)
   }
 
-  if (args.length < 3) usage()
+  def main(args: Array[String]): Unit = {
+    if (args.length < 3) usage()
 
-  val parameters = args.foldLeft[Map[String,String]](Map()) {
-    case (map,par) =>
-      val split = par.split(" *= *", 2)
-      if (split.size == 1) map + (split(0).substring(2) -> "")
-      else map + ((split(0).substring(1), split(1)))
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        if (split.size == 1) map + (split(0).substring(2) -> "")
+        else map + ((split(0).substring(1), split(1)))
+    }
+
+    val inFile: String = parameters("inFile")
+    val outFile: String = parameters("outFile")
+    val decs: String = parameters("decs")
+    val scanLang: Option[String] = parameters.get("scanLang")
+    val outLang: Option[String] = parameters.get("outLang")
+    val prefix: String = parameters.getOrElse("prefix", "<em>")
+    val suffix: String = parameters.getOrElse("suffix", "</em>")
+    val encoding: String = parameters.getOrElse("encoding", "utf-8")
+    val pubType: Char = parameters.getOrElse("pubType", " ").toLowerCase.charAt(0)
+
+    val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") || (pubType == 'h')
+    val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || (pubType != ' ')
+    val scanQualifiers: Boolean = parameters.contains("scanQualifiers") || (pubType == 'q')
+    val scanPublicationTypes: Boolean = parameters.contains("scanPublicationTypes") || (pubType == 't')
+    val scanCheckTags: Boolean = parameters.contains("scanCheckTags") || (pubType == 'c')
+    val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
+    val scanSome: Boolean = scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
+
+    val scanMainHeadings2: Boolean = if (scanSome) scanMainHeadings else true
+    //if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
+
+    val conf: Config = Config(scanLang, outLang, scanMainHeadings2, scanEntryTerms, scanQualifiers, scanPublicationTypes,
+      scanCheckTags, scanGeographics)
+
+    val src: BufferedSource = Source.fromFile(inFile, encoding)
+    val text: String = src.getLines().mkString("\n")
+    src.close()
+    val highlighter: Highlighter = new Highlighter(decs)
+    val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], freq: Seq[(String, Int, Double)]) =
+      highlighter.highlight(prefix, suffix, text, conf)
+
+    if (seq.isEmpty) println("No descriptors found.")
+    else {
+      println("Descriptors found:")
+      seq.foreach {
+        tuple =>
+          println(s"(${tuple._1},${tuple._2}) - ${tuple._5}\tid=${tuple._3} mfn=${tuple._4}")
+      }
+      println("\nMarked text:")
+      println(marked)
+      println("\nFrequency/Score:")
+      freq.foreach(println)
+      //println("Positions:")
+      //seq.foreach(pos => println(pos))
+      val writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFile), encoding))
+      writer.write(marked)
+      writer.close()
+    }
+
+    highlighter.close()
   }
-
-  private val inFile: String = parameters("inFile")
-  private val outFile: String = parameters("outFile")
-  private val decs: String = parameters("decs")
-  private val scanLang: Option[String] = parameters.get("scanLang")
-  private val outLang: Option[String] = parameters.get("outLang")
-  private val prefix: String = parameters.getOrElse("prefix", "<em>")
-  private val suffix: String = parameters.getOrElse("suffix", "</em>")
-  private val encoding: String = parameters.getOrElse("encoding", "utf-8")
-  private val pubType: Char = parameters.getOrElse("pubType", " ").toLowerCase.charAt(0)
-
-  private val scanMainHeadings: Boolean = parameters.contains("scanMainHeadings") || (pubType == 'h')
-  private val scanEntryTerms: Boolean = parameters.contains("scanEntryTerms") || (pubType != ' ')
-  private val scanQualifiers: Boolean = parameters.contains("scanQualifiers") || (pubType == 'q')
-  private val scanPublicationTypes: Boolean = parameters.contains("scanPublicationTypes") || (pubType == 't')
-  private val scanCheckTags: Boolean = parameters.contains("scanCheckTags") || (pubType == 'c')
-  private val scanGeographics: Boolean = parameters.contains("scanGeographics") || (pubType == 'g')
-  private val scanSome: Boolean =  scanMainHeadings || scanQualifiers || scanPublicationTypes || scanCheckTags || scanGeographics
-
-  private val scanMainHeadings2: Boolean = if (scanSome) scanMainHeadings else true
-  //if (!scanSome) throw new IllegalArgumentException("too mach parameters selected")
-
-  private val conf: Config = Config(scanLang, outLang, scanMainHeadings2, scanEntryTerms, scanQualifiers, scanPublicationTypes,
-                  scanCheckTags, scanGeographics)
-
-  private val src: BufferedSource = Source.fromFile(inFile, encoding)
-  private val text: String = src.getLines().mkString("\n")
-  src.close()
-  private val highlighter: Highlighter = new Highlighter(decs)
-  private val (marked: String, seq: Seq[(Int, Int, String, String, String, String)], freq: Seq[(String,Int,Double)]) =
-    highlighter.highlight(prefix, suffix, text, conf)
-
-  if (seq.isEmpty) println("No descriptors found.")
-  else {
-    println("Descriptors found:")
-    seq.foreach{
-      tuple =>
-        println(s"(${tuple._1},${tuple._2}) - ${tuple._5}\tid=${tuple._3} mfn=${tuple._4}")}
-    println("\nMarked text:")
-    println(marked)
-    println("\nFrequency/Score:")
-    freq.foreach(println)
-    //println("Positions:")
-    //seq.foreach(pos => println(pos))
-    val writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFile), encoding))
-    writer.write(marked)
-    writer.close()
-  }
-
-  highlighter.close()
 }

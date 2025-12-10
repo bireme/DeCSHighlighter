@@ -205,52 +205,56 @@ class HighlightServlet extends HttpServlet {
   }
 }
 
-object HighlightServletTest extends App {
-  import sttp.client4._
+object HighlightServletTest {
+  def main(args: Array[String]): Unit = {
+    import sttp.client4._
 
-  private val uri: Uri = uri"http://172.17.1.139:9090/decshighlighter/serv"
-  private val text: String = """Diabesity
-                               |Metastasis is the growth of cancer cells in sites distant from the organ from which
-                               |they originated, and its occurrence indicates a poor prognosis. In the oral cavity
-                               |they are rare. They can occur in the soft tissues, jaws or both, and are of
-                               |significant clinical importance, as they indicate a disseminated stage of cancer,
-                               |and may be the only symptom of an underlying malignancy that has not yet been
-                               |diagnosed. Therefore, it is essential that the dental surgeon is familiar with the
-                               |clinical aspect and radiographic findings most associated with this pathology. The
-                               |aim of this narrative literature review is to compile the main aspects about oral
-                               |metastases for the clinician's work. The pathogenesis of metastases to the oral
-                               |cavity is complex and not fully understood. The most frequent primary sites are
-                               |breast cancer, for metastases in the jaw bones; and lung cancer, for deposits in
-                               |oral soft tissues. The most affected oral regions are the posterior area of the jaw
-                               |and the gingival tissue. Metastases in bone are more prevalent than in soft
-                               |tissues. In general, men are more affected, especially in the fifth to seventh
-                               |decade of life, and the clinical appearance of metastases is variable, resembling
-                               |inflammatory or hyperplastic lesions, but with rapid growth. Radiographic findings
-                               |are nonspecific and may present characteristics such as “moth-eaten” bone and
-                               |irregular increase in periodontal membrane spaces. This review concludes that it
-                               |is essential for the dentist to know and include metastatic lesions in the differential
-                               |diagnosis of oral pathologies, given their high degree of clinical relevance.
-                               |Keywords: Neoplasm Metastasis; Mouth Neoplasms; Pathology, Oral.""".stripMargin
+    val uri: Uri = uri"http://172.17.1.139:9090/decshighlighter/serv"
+    val text: String =
+      """Diabesity
+        |Metastasis is the growth of cancer cells in sites distant from the organ from which
+        |they originated, and its occurrence indicates a poor prognosis. In the oral cavity
+        |they are rare. They can occur in the soft tissues, jaws or both, and are of
+        |significant clinical importance, as they indicate a disseminated stage of cancer,
+        |and may be the only symptom of an underlying malignancy that has not yet been
+        |diagnosed. Therefore, it is essential that the dental surgeon is familiar with the
+        |clinical aspect and radiographic findings most associated with this pathology. The
+        |aim of this narrative literature review is to compile the main aspects about oral
+        |metastases for the clinician's work. The pathogenesis of metastases to the oral
+        |cavity is complex and not fully understood. The most frequent primary sites are
+        |breast cancer, for metastases in the jaw bones; and lung cancer, for deposits in
+        |oral soft tissues. The most affected oral regions are the posterior area of the jaw
+        |and the gingival tissue. Metastases in bone are more prevalent than in soft
+        |tissues. In general, men are more affected, especially in the fifth to seventh
+        |decade of life, and the clinical appearance of metastases is variable, resembling
+        |inflammatory or hyperplastic lesions, but with rapid growth. Radiographic findings
+        |are nonspecific and may present characteristics such as “moth-eaten” bone and
+        |irregular increase in periodontal membrane spaces. This review concludes that it
+        |is essential for the dentist to know and include metastatic lesions in the differential
+        |diagnosis of oral pathologies, given their high degree of clinical relevance.
+        |Keywords: Neoplasm Metastasis; Mouth Neoplasms; Pathology, Oral.""".stripMargin
 
-  private val text1: String = """Boletim epidemiológico que apresenta informações sobre os casos de HIV no estado de Goiás
-                               |e tem como objetivo descrever o perfil epidemiológico, tendências da infecção na população
-                               |adulta entre os anos 2020 a 2024 e fornecer subsídios para a tomada de decisão, medidas de
-                               |vigilância, prevenção e controle da infecção pelo HIV em sua quinta década de epidemia.
-                               |Trata-se de um estudo descritivo, a partir dos dados obtidos do Sistema de Informação de
-                               |Agravos de Notificação (SINAN) e Sistema de Informação de Mortalidade (SIM). Foram tabulados
-                               |os dados diagnosticados e notificados por HIV/Aids por município de residência""".stripMargin
+    val text1: String =
+      """Boletim epidemiológico que apresenta informações sobre os casos de HIV no estado de Goiás
+        |e tem como objetivo descrever o perfil epidemiológico, tendências da infecção na população
+        |adulta entre os anos 2020 a 2024 e fornecer subsídios para a tomada de decisão, medidas de
+        |vigilância, prevenção e controle da infecção pelo HIV em sua quinta década de epidemia.
+        |Trata-se de um estudo descritivo, a partir dos dados obtidos do Sistema de Informação de
+        |Agravos de Notificação (SINAN) e Sistema de Informação de Mortalidade (SIM). Foram tabulados
+        |os dados diagnosticados e notificados por HIV/Aids por município de residência""".stripMargin
 
-  private val request: Request[Either[String, String]] = basicRequest
-    .body(Map("showText" -> "f",
-              "showPositions" -> "f",
-              "showDescriptors" -> "f",
-              "showScores" -> "t",
-              "document" -> text1))
-    .post(uri)
+    val request: Request[Either[String, String]] = basicRequest
+      .body(Map("showText" -> "f",
+        "showPositions" -> "f",
+        "showDescriptors" -> "f",
+        "showScores" -> "t",
+        "document" -> text1))
+      .post(uri)
 
-  private val backend: WebSocketSyncBackend = HttpClientSyncBackend()
-  private val response: Identity[Response[Either[String, String]]] = request.send(backend)
+    val backend: WebSocketSyncBackend = HttpClientSyncBackend()
+    val response: Identity[Response[Either[String, String]]] = request.send(backend)
 
-  println(response.body)
-  println(response.headers)
+    println(response.body)
+    println(response.headers)
+  }
 }

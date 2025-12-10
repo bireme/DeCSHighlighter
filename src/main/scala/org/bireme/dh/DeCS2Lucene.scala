@@ -11,28 +11,30 @@ import org.bireme.dh.Tools.uniformString
 
 import scala.jdk.CollectionConverters._
 
-object DeCS2Lucene extends App {
+object DeCS2Lucene {
   private def usage(): Unit = {
     System.err.println("usage: DeCS2Lucene <options> ")
     System.err.println("options:")
     System.err.println("-isis=<isisPath> : path to DeCS Isis master")
     System.err.println("-lucene=<lucenePath> : path to Lucene DeCS index to be created")
   }
-  if (args.length < 2) usage()
 
-  val parameters = args.foldLeft[Map[String,String]](Map()) {
-    case (map, par) =>
-      val split = par.split(" *= *", 2)
-      split.length match {
-        case 1 => map + ((split(0).substring(2), ""))
-        case _ => map + ((split(0).substring(1), split(1)))
-      }
+  private val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
+
+  def main(args: Array[String]): Unit = {
+    if (args.length < 2) usage()
+
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        split.length match {
+          case 1 => map + ((split(0).substring(2), ""))
+          case _ => map + ((split(0).substring(1), split(1)))
+        }
+    }
+
+    create(parameters("isis"), parameters("lucene"))
   }
-
-  create(parameters("isis"), parameters("lucene"))
-
-  val stopwords = Set("la", "foram", "amp", "www") // are common words and have other meanings in other languages
-
 
   def create(isisPath: String,
              lucenePath: String): Unit = {
@@ -51,8 +53,8 @@ object DeCS2Lucene extends App {
     directory.close()
   }
 
-  def createDocuments(rec: Record,
-                      writer: IndexWriter): Unit = {
+  private def createDocuments(rec: Record,
+                              writer: IndexWriter): Unit = {
     if (rec.getStatus == Record.Status.ACTIVE) {
       val id: String = getField(rec, 99).head._2
       val uid: String = getField(rec, 480).headOption.getOrElse(("", ""))._2
@@ -147,7 +149,7 @@ object DeCS2Lucene extends App {
 
     mainHeadings.map {
       fld =>
-        val doc = new Document()
+        val doc: Document = new Document()
         doc.add(new StringField("id", id, Field.Store.YES))
         doc.add(new StringField("uniqueId", uid, Field.Store.YES))
         doc.add(new StringField("lang", lang, Field.Store.YES))
@@ -157,7 +159,7 @@ object DeCS2Lucene extends App {
     } ++
       entryTerms.map {
         fld =>
-          val doc = new Document()
+          val doc: Document = new Document()
           doc.add(new StringField("id", id, Field.Store.YES))
           doc.add(new StringField("uniqueId", uid, Field.Store.YES))
           doc.add(new StringField("lang", lang, Field.Store.YES))

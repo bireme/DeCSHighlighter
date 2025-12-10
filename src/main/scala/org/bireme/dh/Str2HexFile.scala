@@ -14,25 +14,27 @@ import scala.io.Source
   *    - takes 2 letters (hexadecimal number representation) and converts them into the hexadecimal number
   *    - can consider little endian or bin endian byte order
   */
-object Str2HexFile extends App {
+object Str2HexFile {
   private def usage(): Unit = {
     System.err.println("usage: Str2HexFile -in=<inFile> -out=<outFile> [--swapBytes]")
     System.exit(1)
   }
+  
+  def main(args: Array[String]): Unit = {
+    if (args.length < 2) usage()
 
-  if (args.length < 2) usage()
+    val parameters = args.foldLeft[Map[String, String]](Map()) {
+      case (map, par) =>
+        val split = par.split(" *= *", 2)
+        split.length match {
+          case 1 => map + ((split(0).substring(2), ""))
+          case _ => map + ((split(0).substring(1), split(1)))
+        }
+    }
 
-  val parameters = args.foldLeft[Map[String,String]](Map()) {
-    case (map, par) =>
-      val split = par.split(" *= *", 2)
-      split.length match {
-        case 1 => map + ((split(0).substring(2), ""))
-        case _ => map + ((split(0).substring(1), split(1)))
-      }
+    convert(parameters("in"), parameters("out"), parameters.contains("swapBytes"))
   }
-
-  convert(parameters("in"), parameters("out"), parameters.contains("swapBytes"))
-
+  
   private def convert(in: String,
                       out: String,
                       swapBytes: Boolean): Unit = {
@@ -48,9 +50,9 @@ object Str2HexFile extends App {
     val bb: ByteBuffer = createBuffer(inStr, 0, strLen, ByteBuffer.allocate(strLen), swapBytes)
 
     val fc: FileChannel = FileChannel.open(Paths.get(out),
-                                           StandardOpenOption.CREATE,
-                                           StandardOpenOption.TRUNCATE_EXISTING,
-                                           StandardOpenOption.WRITE)
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING,
+      StandardOpenOption.WRITE)
     fc.write(bb.flip().asInstanceOf[ByteBuffer]) // .asInstanceOf[ByteBuffer]) to avoid overloaded method error
     fc.close()
   }
