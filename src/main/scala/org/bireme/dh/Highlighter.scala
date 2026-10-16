@@ -58,6 +58,18 @@ class Highlighter(decsPath: String) {
   private val isearcher: IndexSearcher = new IndexSearcher(ireader)
   private val langs = Set("en", "es", "pt", "fr")
 
+  // LRU cache of getDesiredTerm results: (normalized term, configuration) -> Option(uniqueId, id, term).
+  // Each lookup in the Lucene index loads and decompresses dozens of stored documents, and the same terms
+  // are found again and again in the texts. The index never changes during the object lifetime, so the
+  // cache needs no invalidation. Each entry uses about 350 bytes (200000 entries ~ 70 MB).
+  private val termCacheMaxSize: Int = 200000
+  private val termCache: java.util.LinkedHashMap[(String, Config), Option[(String, String, String)]] =
+    new java.util.LinkedHashMap[(String, Config), Option[(String, String, String)]](1024, 0.75f, true) {
+      override def removeEldestEntry(eldest: java.util.Map.Entry[(String, Config),
+                                                                 Option[(String, String, String)]]): Boolean =
+        size() > termCacheMaxSize
+    }
+
   val terms: Map[Char, CharSeq] = createTermTree(decs2Set(isearcher))
 
   def close(): Unit = {
@@ -324,11 +336,8 @@ class Highlighter(decsPath: String) {
             findTerm(curPos3, text, range._2) match {
               case Some((endPos, term)) =>
                 getDesiredTerm(term, conf) match {
-                  case Some(doc) =>
+                  case Some((id, mfnId, outTerm)) =>
                     val seq = highlight(endPos + 1, text, length, seqElem2, conf)
-                    val id: String = Option(doc.get("uniqueId")).getOrElse("")
-                    val mfnId: String = Option(doc.get("id")).getOrElse("")
-                    val outTerm: String = Option(doc.get("term")).getOrElse("")
 
                     (curPos3, endPos, id, mfnId, outTerm) +: seq
                   case None => highlight(endPos + 1, text, length, seqElem2, conf)
@@ -412,14 +421,37 @@ class Highlighter(decsPath: String) {
   }
 
   /**
+    * Cached version of findDesiredTerm. Thread safe.
+    * @param term the term content (string)
+    * @param conf the initial filter conditions
+    * @return (uniqueId, id, term) fields of the document chosen by findDesiredTerm
+    */
+  private def getDesiredTerm(term: String,
+                             conf: Config): Option[(String, String, String)] = {
+    val key: (String, Config) = (term, conf)
+    val cached: Option[(String, String, String)] = termCache.synchronized(termCache.get(key))
+
+    if (cached != null) cached
+    else {
+      // The search runs outside the lock, so other threads are not blocked by it
+      val result: Option[(String, String, String)] = findDesiredTerm(term, conf).map {
+        doc => (Option(doc.get("uniqueId")).getOrElse(""), Option(doc.get("id")).getOrElse(""),
+                Option(doc.get("term")).getOrElse(""))
+      }
+      termCache.synchronized(termCache.put(key, result))
+      result
+    }
+  }
+
+  /**
     * Given a set of documents and a term's string, return one document that has the term and follow the given
     * restrictions (show descriptor, show synonyms, only precod)
     * @param term the term content (string)
     * @param conf the initial filter conditions
     * @return the document chosen from the input set
     */
-  private def getDesiredTerm(term: String,
-                             conf: Config): Option[Document] = {
+  private def findDesiredTerm(term: String,
+                              conf: Config): Option[Document] = {
     val docs: Seq[Document] = getTermDocs(term)
 
     if (docs.isEmpty) None
