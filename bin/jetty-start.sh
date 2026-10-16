@@ -1,5 +1,12 @@
 #!/bin/sh
 
+if [ -z "$JAVA_HOME_25" ]; then
+  echo "variável de ambiente JAVA_HOME_25 não definida"
+  exit 1
+fi
+
+PATH=$JAVA_HOME_25/bin:$PATH
+
 DH_DIR=/home/javaapps/sbt-projects/DeCSHighlighter
 
 cd $DH_DIR/jetty-base || exit

@@ -54,3 +54,8 @@ assembly / assemblyMergeStrategy := {
 */
 
 //test in assembly := {}
+
+// Força a "major version" da compilaçao ser 69 (java 25)
+ThisBuild / scalacOptions ++= Seq("-release", "25")
+Compile / javacOptions ++= Seq("--release", "25") // só se você tiver fontes Java
+
