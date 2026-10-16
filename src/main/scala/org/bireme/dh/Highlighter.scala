@@ -10,9 +10,10 @@ package org.bireme.dh
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 import java.nio.file.Path
 import org.apache.lucene.document.Document
-import org.apache.lucene.index.{DirectoryReader, Term}
-import org.apache.lucene.search.{IndexSearcher, MatchAllDocsQuery, Query, ScoreDoc, TermQuery, TopDocs}
+import org.apache.lucene.index.{DirectoryReader, IndexReader, MultiBits, MultiTerms, PostingsEnum, Term, TermsEnum}
+import org.apache.lucene.search.{DocIdSetIterator, IndexSearcher, TermQuery}
 import org.apache.lucene.store.{FSDirectory, MMapDirectory}
+import org.apache.lucene.util.{Bits, BytesRef}
 
 import scala.collection.immutable.HashMap
 import scala.io.{BufferedSource, Source}
@@ -78,7 +79,9 @@ class Highlighter(decsPath: String) {
   }
 
   /**
-    * Create a set of descriptors, qualifiers and synonyms of the DeCS
+    * Create a set of descriptors, qualifiers and synonyms of the DeCS.
+    * The terms are read from the term dictionary of the 'term_normalized' field (a StringField, so each
+    * indexed term is exactly the stored value) instead of loading and decompressing every stored document.
     *
     * @param isearcher Lucene search object
     * @return a set of descriptor, qualifiers and synonyms
@@ -87,67 +90,32 @@ class Highlighter(decsPath: String) {
     // descriptors that should be avoided because are common words and have other meanings in other languages
     //val stopwords = Set("la", "foram", "amp", "www")
     val stopwords = Set("amp", "www", "ano", "la", "dos", "or", "the")
-    val query: Query = new MatchAllDocsQuery()
-    var total = 0
+    val reader: IndexReader = isearcher.getIndexReader
+    val builder = Set.newBuilder[String]
 
-    val terms = getNextDoc(isearcher, query).foldLeft(Set[String]()) {
-      case (set, doc) =>
-        val term: String = doc.get("term_normalized")
-        total += 1
-        if (stopwords.contains(term)) set
-        else set + term
-    }
+    Option(MultiTerms.getTerms(reader, "term_normalized")).foreach {
+      terms =>
+        val liveDocs: Bits = MultiBits.getLiveDocs(reader)   // null if the index has no deleted documents
+        val termsEnum: TermsEnum = terms.iterator()
+        var postings: PostingsEnum = null
+        var bytes: BytesRef = termsEnum.next()
 
-    terms
-  }
-
-  /**
-    * Create a lazy list of documents retrieved by a search expression
-    * @param isearcher Lucene search object
-    * @param query search expression
-    * @return a lazy list of the retrieved documents
-    */
-  private def getNextDoc(isearcher: IndexSearcher,
-                         query: Query): LazyList[Document] = {
-    val total: Int = isearcher.count(query)
-    getNextDoc(isearcher, query, None, total, 0)
-  }
-
-  private def getNextDoc(isearcher: IndexSearcher,
-                         query: Query,
-                         top: Option[TopDocs],
-                         total: Int,
-                         curIndex: Int): LazyList[Document] = {
-    require ((curIndex == 0 && top.isEmpty) || (curIndex != 0 && top.isDefined))
-
-    val indexTopDocs: Option[(Int,TopDocs)] = top match  {
-      case Some(topDocs) =>
-        if (curIndex == total) None
-        else {
-          val batchSize: Int = 1000
-          val curIndex2: Int = curIndex % batchSize
-          if (curIndex2 == 0)
-            Some(0, loadTopDocs(isearcher, query, Some(topDocs.scoreDocs(batchSize - 1))))
-          else Some((curIndex2, topDocs))
+        while (bytes != null) {
+          // with deleted documents, a term is kept only if some live document has it
+          val live: Boolean = (liveDocs == null) || {
+            postings = termsEnum.postings(postings, PostingsEnum.NONE)
+            var doc: Int = postings.nextDoc()
+            while ((doc != DocIdSetIterator.NO_MORE_DOCS) && !liveDocs.get(doc)) doc = postings.nextDoc()
+            doc != DocIdSetIterator.NO_MORE_DOCS
+          }
+          if (live) {
+            val term: String = bytes.utf8ToString()
+            if (!stopwords.contains(term)) builder += term
+          }
+          bytes = termsEnum.next()
         }
-      case None => Some((0, loadTopDocs(isearcher, query, None)))
     }
-    indexTopDocs match {
-      case Some((index, topDocs)) =>
-        if (topDocs.scoreDocs.length > 0) {
-          isearcher.storedFields().document(topDocs.scoreDocs(index).doc) #:: getNextDoc(isearcher, query, Some(topDocs), total, curIndex + 1)
-        } else LazyList.empty
-      case None => LazyList.empty
-    }
-  }
-
-  private def loadTopDocs(isearcher: IndexSearcher,
-                          query: Query,
-                          last: Option[ScoreDoc]): TopDocs = {
-     last match {
-       case Some(lst) => isearcher.searchAfter(lst, query, 1000)
-       case None => isearcher.search(query, 1000)
-     }
+    builder.result()
   }
 
   /**
@@ -161,11 +129,11 @@ class Highlighter(decsPath: String) {
         val firstChar: Char = term.head
         map.get(firstChar) match {
           case Some(cseq) =>
-            insertTerm(cseq, term.tail)
+            insertTerm(cseq, term, 1)
             map
           case None =>
             val first: CharSeq = CharSeq(firstChar)
-            insertTerm(first, term.tail)
+            insertTerm(first, term, 1)
             map + (firstChar -> first)
         }
     }
@@ -176,22 +144,17 @@ class Highlighter(decsPath: String) {
  *
     * @param seq the current graph
     * @param term the descriptor, qualifier or synonym to be inserted
+    * @param pos the position of the term char to be inserted (avoids creating a substring for each char)
     */
   @scala.annotation.tailrec
   private def insertTerm(seq: CharSeq,
-                         term: String): Unit = {
-    if (term.isEmpty) {  // end of stream
+                         term: String,
+                         pos: Int): Unit = {
+    if (pos >= term.length) {  // end of stream
       seq.isLeaf = true
     } else {
-      val head: Char = term.head
-      seq.other.get(head) match {
-        case Some(cseq) =>
-          insertTerm(cseq, term.tail)
-        case None =>
-          val cseq: CharSeq = CharSeq(head)
-          seq.other.addOne(head, cseq)
-          insertTerm(cseq, term.tail)
-      }
+      val head: Char = term.charAt(pos)
+      insertTerm(seq.other.getOrElseUpdate(head, CharSeq(head)), term, pos + 1)
     }
   }
 
