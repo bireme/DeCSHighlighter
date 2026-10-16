@@ -29,6 +29,9 @@ libraryDependencies ++= Seq(
 )
 
 Test / logBuffered := false
+// Tests run in a separate JVM: each Highlighter loads the DeCS index, which does not fit in sbt's own memory
+Test / fork := true
+Test / javaOptions ++= Seq("-Xmx4g")
 trapExit := false
 
 resolvers += "Artima Maven Repository" at "https://repo.artima.com/releases"

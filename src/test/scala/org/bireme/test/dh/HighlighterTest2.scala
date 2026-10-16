@@ -17,14 +17,27 @@ class HighlighterTest2 extends AnyFlatSpec {
     assert (Tools.uniformString(seq2.head._1).equals("matadouros"))
   }
 
+  // Qualifiers are indexed with the slash ('/etiologia') and are recognized only when attached to a
+  // word, as in the DeCS notation descriptor/qualifier
   it should "find 'etiologia' (PT) as qualifier" in {
+    val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
+      scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
+    val str = "Devemos tudo ao estudo/etiologia"
+
+    val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
+    println(s"text=$text seq=$seq seq2=$seq2")
+    assert (text.equals("Devemos tudo ao estudo<em>/etiologia</em>"))
+    assert (seq2.map(_._1) == Seq("/etiologia"))
+  }
+
+  it should "not find a qualifier that is not attached to a word" in {
     val conf: Config = Config(Some("pt"), None, scanMainHeadings=true, scanEntryTerms=true, scanQualifiers=true,
       scanPublicationTypes=true, scanCheckTags=true, scanGeographics=true)
     val str = "Devemos tudo ao estudo /etiologia"
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head._1).equals("etiologia"))
+    assert (seq2.isEmpty)
   }
 
   it should "find 'abattoirs' (EN) as descriptor" in {
@@ -188,7 +201,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Femmes"))
+    assert (seq2.map(_._1).contains("Femmes"))      // seq2 elements are (descriptor, quantity, score)
   }
 
   it should "return 'Mulheres' the descriptor instead of 'Meninas' the synonym" in {
@@ -198,7 +211,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Mulheres"))
+    assert (seq2.map(_._1).contains("Mulheres"))
   }
 
   it should "return 'Mulheres' the descriptor instead of 'Meninas' the synonym (no language configuration)" in {
@@ -208,7 +221,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Mulheres"))
+    assert (seq2.map(_._1).contains("Mulheres"))
   }
 
   it should "not return 'Femmes' the descriptor instead of 'Meninas' the synonym because we do not want synonyms" in {
@@ -240,7 +253,7 @@ class HighlighterTest2 extends AnyFlatSpec {
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (seq2.contains("Brasil"))
+    assert (seq2.map(_._1).contains("Brasil"))
   }
 
   it should "return 'Mulheres' as descriptor and 'Brasil' as geographic" in {
@@ -260,10 +273,12 @@ class HighlighterTest2 extends AnyFlatSpec {
   it should "find 'análise' (PT) as qualifier but not 'matadouros'" in {
     val conf: Config = Config(Some("pt"), Some("pt"), scanMainHeadings=false, scanEntryTerms=false, scanQualifiers=true,
       scanPublicationTypes=false, scanCheckTags=false, scanGeographics=false)
-    val str = "Os matadouros no Brasil precisam de uma análise precisa de seu uso."
+    // the qualifier must be attached to a word (descriptor/qualifier), and main headings are not scanned
+    val str = "Os matadouros/análise no Brasil precisam de uso."
 
     val (text, seq, seq2) = highlighter.highlight("<em>", "</em>", str, conf)
     println(s"text=$text seq=$seq seq2=$seq2")
-    assert (Tools.uniformString(seq2.head._1).equals("analise"))
+    assert (text.equals("Os matadouros<em>/análise</em> no Brasil precisam de uso."))
+    assert (seq2.map(_._1) == Seq("/análise"))
   }
 }
